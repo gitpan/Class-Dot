@@ -1,0 +1,171 @@
+NAME
+    Class::Dot - Simple way of creating accessor methods.
+
+VERSION
+    This document describes Class::Dot version v1.0.
+
+SYNOPSIS
+         package Animal::Mammal::Carnivorous::Cat;
+ 
+         use Class::Dot qw( :std );
+ 
+         # A cat's properties, with their default values and type of data.
+         property gender      => isa_String('male');
+         property memory      => isa_Hash;
+         property state       => isa_Hash(instinct => 'hungry');
+         property family      => isa_Array;
+         property dna         => isa_Data;
+         property action      => isa_Data;
+         property colour      => isa_Int(0xfeedface);
+         property fur         => isa_Array('short');
+ 
+          sub new {
+             my ($class, $gender) = @_;
+             my $self    = { }; # Must be anonymous hash for Class::Dot to work.
+             bless $self, $class;
+ 
+             $self->set_gender($gender);
+ 
+             warn sprintf('A new cat is born, it is a %s. Weeeeh!',
+                 $self->gender
+             );
+ 
+             return $self;
+         }
+ 
+         sub run {
+             while (1) {
+                 die if $self->state->{dead};
+             }
+         }
+ 
+         package main;
+ 
+         my $albert = new Animal::Mammal::Carnivorous::Cat('male');
+         $albert->memory->{name} = 'Albert';
+         $albert->state->{appetite} = 'insane';
+         $albert->set_fur([qw(short thin shiny)]);
+         $albert->set_action('hunting');
+ 
+         my $lucy = new Animal::Mammal::Carnivorous::Cat('female');
+         $lucy->memory->{name} = 'Lucy';
+         $lucy->state->{instinct => 'tired'};
+         $lucy->set_fur([qw(fluffy long)]);
+         $lucy->set_action('sleeping');
+ 
+         push @{ $lucy->family   }, [$albert];
+         push @{ $albert->family }, [$lucy  ];
+
+DESCRIPTION
+    A simple module for creating accessor methods with default types.
+
+SUBROUTINES/METHODS
+  CLASS METHODS
+   "property($property, $default_value)"
+    Example:
+
+         property foo => isa_String('hello world');
+ 
+         property bar => isa_Int(303);
+
+    will create the methods:
+
+         foo( )
+         set_foo($value)
+ 
+         bar( )
+         set_bar($value)
+
+    with default return values -hello world- and -303-.
+
+   "isa_String($default_value)"
+    The property is a string.
+
+   "isa_Int($default_value)"
+    The property is a number.
+
+   "isa_Array(@default_values)"
+    The property is an array.
+
+   "isa_Hash(%default_values)"
+    The property is an hash.
+
+   "isa_Object($kind)"
+    The property is a object. (Does not really set a default value.).
+
+   "isa_Data()"
+    The object is of a not yet defined data type.
+
+  INSTANCE METHODS
+   "->properties_for_class($class)"
+    Return the list of properties for a class/object that uses the powers.
+
+  PRIVATE CLASS METHODS
+   "_create_get_accessor($property, $default_value)"
+    Create the set accessor for a property. Returns a code reference to the
+    new setter method. It has to be installed into the callers package
+    afterwards.
+
+   "_create_set_accessor($property)"
+    Create the get accessor for a property. Returns a code reference to the
+    new getter method. It has to be installed into the callers package
+    afterwards.
+
+DIAGNOSTICS
+  * You tried to set a value with "foo()". Did you mean "set_foo()"
+    Self-explained?
+
+CONFIGURATION AND ENVIRONMENT
+    This module requires no configuration file or environment variables.
+
+DEPENDENCIES
+    *   version
+
+INCOMPATIBILITIES
+    None known.
+
+BUGS AND LIMITATIONS
+    No bugs have been reported.
+
+    Please report any bugs or feature requests to bug-class-dot@rt.cpan.org,
+    or through the web interface at CPAN Bug tracker.
+
+SEE ALSO
+  Class::InsideOut
+AUTHOR
+    Ask Solem, ask@0x61736b.net.
+
+LICENSE AND COPYRIGHT
+    Copyright (c), 2007 Ask Solem ask@0x61736b.net.
+
+    All rights reserved.
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.8.6 or, at
+    your option, any later version of Perl 5 you may have available.
+
+DISCLAIMER OF WARRANTY
+    BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+    FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+    OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+    PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+    EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+    ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+    YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+    NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+    IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+    WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+    REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENSE, BE LIABLE
+    TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+    CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+    SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+    RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+    FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+    SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+    DAMAGES.
+
+    # Local Variables: # mode: cperl # cperl-indent-level: 4 # fill-column:
+    78 # End: # vim: expandtab tabstop=4 shiftwidth=4 shiftround
+
