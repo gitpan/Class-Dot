@@ -26,7 +26,7 @@ sub NO  { 0 };
 $ENV{DEVEL_COVER_OPTIONS} = '-ignore,blib/Class/InsideOut/Policy/Modwheel.pm';
 my $builder = Module::Build::Class::Dot->new(
     module_name          => 'Class::Dot',
-    dist_version        => '1.0.0',
+    dist_version        => '1.0.1',
     license              => 'perl',
     dist_author          => 'Ask Solem <ASKSH@cpan.org>',
     all_from             => 'lib/Class/Dot/Model.pm',

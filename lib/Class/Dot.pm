@@ -8,7 +8,7 @@ package Class::Dot;
 
 use strict;
 use warnings;
-use version; our $VERSION = qv('1.0.0');
+use version; our $VERSION = qv('1.0.1');
 use 5.006_001;
 
 use Carp qw(croak);
@@ -163,7 +163,7 @@ sub _create_destroy_method {
         my ($self) = @_;
         my $properties_ref =$PROPERTIES_FOR{$CALLPKG};
         undef %{$properties_ref};
-        delete$PROPERTIES_FOR{$CALLPKG};
+        delete $PROPERTIES_FOR{$CALLPKG};
 
         no strict   'refs'; ## no critic
         no warnings 'once'; ## no critic
@@ -212,7 +212,7 @@ sub _create_get_accessor {
         if (!exists $self->{$property}) {
             $self->{$property} =
                 ref $isa eq 'CODE'
-                ? $isa->()
+                ? $isa->($self)
                 : $isa;
         }
 
@@ -285,7 +285,17 @@ sub isa_Data   { ## no critic
 }
 
 sub isa_Object { ## no critic
+    my $class = shift;
+    my %opts;
+    if (!scalar @_ % 2) {
+        %opts = @_;
+    }
     return sub {
+        return if not defined $class;
+        if ($opts{auto}) {
+            return if not $class->can('new');
+            return        $class->new();
+        }
         return;
     };
 }

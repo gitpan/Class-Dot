@@ -7,9 +7,11 @@ use lib 'lib';
 use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
+use Scalar::Util qw(refaddr);
 use TestProperties;
+use Cat;
 
-our $THIS_TEST_HAS_TESTS = 32;
+our $THIS_TEST_HAS_TESTS = 34;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -19,14 +21,22 @@ ok(! Class::Dot::property( ),
     'property without property'
 );
 
-my $testo = TestProperties->new( );
+my $testo  = TestProperties->new( );
+my $cat    = Cat->new( );
+my $testo2 = TestProperties->new({ obj => $cat });
 
 for my $property (qw(foo set_foo bar set_bar obj set_obj defval set_defval
     digit set_digit hash set_hash array set_array
     nodefault set_nodefault string set_string)) {
     can_ok($testo, $property);
 }
-ok(! $testo->obj, 'isa_Object has no default value' );
+isa_ok( $testo->obj,  'Cat',
+   'isa_Object creates a new object of the type it is by default'
+);
+is(refaddr($testo2->obj), refaddr($cat),
+   'isa_Object doesn\'t creat new object if object already set.'
+);
+ok( ! defined $testo->mystery_object, 'isa_Object with no default class' );
 ok(! $testo->foo, 'isa_Data has no default value' );
 $testo->set_foo('foofoo', 'set a value');
 is($testo->foo, 'foofoo', 'retrieve a value');
