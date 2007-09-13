@@ -1,9 +1,9 @@
-# $Id: LL.pm,v 1.3 2007/06/28 18:40:09 ask Exp $
+# $Id: Dot.pm 6 2007-09-13 10:22:19Z asksol $
 # $Source: /opt/CVS/Getopt-LL/inc/Module/Build/Getopt/LL.pm,v $
-# $Author: ask $
-# $HeadURL$
-# $Revision: 1.3 $
-# $Date: 2007/06/28 18:40:09 $
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/inc/Module/Build/Class/Dot.pm $
+# $Revision: 6 $
+# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
 package Module::Build::Class::Dot;
 use strict;
 use warnings;

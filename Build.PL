@@ -1,9 +1,9 @@
-# $Id: Build.PL,v 1.5 2007/07/13 00:00:11 ask Exp $
+# $Id: Build.PL 6 2007-09-13 10:22:19Z asksol $
 # $Source: /opt/CVS/Getopt-LL/Build.PL,v $
-# $Author: ask $
-# $HeadURL$
-# $Revision: 1.5 $
-# $Date: 2007/07/13 00:00:11 $
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/Build.PL $
+# $Revision: 6 $
+# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
 use strict;
 use warnings;
 
@@ -26,7 +26,7 @@ sub NO  { 0 };
 $ENV{DEVEL_COVER_OPTIONS} = '-ignore,blib/Class/InsideOut/Policy/Modwheel.pm';
 my $builder = Module::Build::Class::Dot->new(
     module_name          => 'Class::Dot',
-    dist_version        => '1.0.1',
+    dist_version        => '1.0.3',
     license              => 'perl',
     dist_author          => 'Ask Solem <ASKSH@cpan.org>',
     all_from             => 'lib/Class/Dot/Model.pm',
@@ -37,12 +37,6 @@ my $builder = Module::Build::Class::Dot->new(
     recursive_test_files => YES,
     requires             => {
         'version'                               => 0,
-        'Getopt::LL'                            => 0,
-        'Class::Dot'                            => 0,
-        'Class::Plugin::Util'                   => 0,
-        'Params::Util'                          => 0,
-        'Config::PlConfig'                      => 0,
-        'DBIx::Class'                           => 0,
     },
     recommends           => {
         'Test::Exception'       => 0.25,

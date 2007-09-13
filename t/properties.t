@@ -11,7 +11,7 @@ use Scalar::Util qw(refaddr);
 use TestProperties;
 use Cat;
 
-our $THIS_TEST_HAS_TESTS = 34;
+our $THIS_TEST_HAS_TESTS = 40;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -27,7 +27,7 @@ my $testo2 = TestProperties->new({ obj => $cat });
 
 for my $property (qw(foo set_foo bar set_bar obj set_obj defval set_defval
     digit set_digit hash set_hash array set_array
-    nodefault set_nodefault string set_string)) {
+    nodefault set_nodefault intnoval set_intnoval string set_string)) {
     can_ok($testo, $property);
 }
 isa_ok( $testo->obj,  'Cat',
@@ -58,9 +58,17 @@ is( $testo->nofunc, 'This does not use isa_*',
     'property that does not use isa_*'
 );
 
-ok(! $testo->nodefault );
+ok(! $testo->intnoval, 'int with no default value is not true' );
 
-ok(! $testo->string );
+ok(! defined $testo->intnoval, 'int with no default is not defined' );
+
+ok(! $testo->nodefault, 'property with no type set is not true' );
+
+ok(! defined $testo->nodefault, 'property with no type set is not defined' );
+
+ok(! $testo->string, 'string with no default value is not true' );
+
+ok(! defined $testo->string, 'string with no default value is not defined' );
 
 
 is($testo->defval, 'la liberation', 'default value for isa_String');

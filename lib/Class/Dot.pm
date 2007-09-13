@@ -1,14 +1,14 @@
-# $Id: Dot.pm,v 1.5 2007/07/13 00:00:12 ask Exp $
+# $Id: Dot.pm 6 2007-09-13 10:22:19Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
-# $Author: ask $
-# $HeadURL$
-# $Revision: 1.5 $
-# $Date: 2007/07/13 00:00:12 $
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
+# $Revision: 6 $
+# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
 package Class::Dot;
 
 use strict;
 use warnings;
-use version; our $VERSION = qv('1.0.1');
+use version; our $VERSION = qv('1.0.3');
 use 5.006_001;
 
 use Carp qw(croak);
@@ -235,9 +235,10 @@ sub isa_String { ## no critic
 
     return sub {
 
-        return defined $default_value
-            ? $default_value
-            : q{};
+        return $default_value
+            if defined $default_value;
+
+        return;
     };
 }
 
@@ -246,9 +247,10 @@ sub isa_Int    { ## no critic
 
     return sub {
 
-        return defined $default_value
-            ? $default_value
-            : 0;
+        return $default_value
+            if defined $default_value;
+
+        return; 
     };
 }
 

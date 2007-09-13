@@ -1,5 +1,14 @@
 Revision history for Class-Dot
 
+1.0.3  Thu Sep 12 16:55:48 2007
+    -  isa_Int and isa_String set the initial value to 0 and q{} when no
+       default value was defined, this resulted in `defined $property` to
+       return true.
+
+1.0.2  Tue Sep 12 10:13:04 2007
+    -  Subversion now hosted at googlecode.
+       http://class-dot.googlecode.comsearch
+
 1.0.1  Tue Sep 11 24:36:32 2007
     -  isa_Object no longer automaticly makes new objects if the property is
        not set. If you want that, use: isa_Object('My::Class', auto => 1);

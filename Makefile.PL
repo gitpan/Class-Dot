@@ -5,12 +5,6 @@ WriteMakefile
           'NAME' => 'Class::Dot',
           'VERSION_FROM' => 'lib/Class/Dot.pm',
           'PREREQ_PM' => {
-                           'Class::Dot' => '0',
-                           'Class::Plugin::Util' => '0',
-                           'Config::PlConfig' => '0',
-                           'DBIx::Class' => '0',
-                           'Getopt::LL' => '0',
-                           'Params::Util' => '0',
                            'Test::Simple' => '0.42',
                            'version' => '0'
                          },
