@@ -8,7 +8,7 @@ package Class::Dot;
 
 use strict;
 use warnings;
-use version; our $VERSION = qv('1.0.3');
+use version; our $VERSION = qv('1.0.4');
 use 5.006_001;
 
 use Carp qw(croak);
@@ -23,7 +23,7 @@ my %EXPORT_CLASS = (':std'  => [@EXPORT_OK],);
 my %OPTIONS_FOR;
 my %PROPERTIES_FOR;
 
-sub import {
+sub import { ## no critic
     my $this_class   = shift;
     my $caller_class = caller;
 
@@ -99,13 +99,11 @@ sub _create_constructor {
         my ($class, $options_ref) = @_;
         $options_ref ||= {};
 
-        local *__ANON__ = $class . 'new'; ## no critic;
-
-        my $self = {};
+        my $self = { };
         bless $self, $class;
 
-        our @ISA;        ## no critic
-        my  @isa = @ISA; ## no critic
+        no strict 'refs'; ## no critic;
+        my  @isa = @{ "${class}::ISA" };
 
     OPTION:
         while (my ($opt_key, $opt_value) = each %{$options_ref}) {
@@ -113,8 +111,7 @@ sub _create_constructor {
 
         ISA:
             for my $isa ($class, @isa) {
-                if ($PROPERTIES_FOR{$isa} && $PROPERTIES_FOR{$isa}{$opt_key})
-                {
+                if ($PROPERTIES_FOR{$isa} && $PROPERTIES_FOR{$isa}{$opt_key}) {
                     $has_property = 1;
                     last ISA;
                 }
@@ -250,7 +247,7 @@ sub isa_Int    { ## no critic
         return $default_value
             if defined $default_value;
 
-        return; 
+        return;
     };
 }
 
@@ -281,7 +278,13 @@ sub isa_Hash   { ## no critic
 }
 
 sub isa_Data   { ## no critic
+    my ($default_value) = @_;
+
     return sub {
+
+        return $default_value
+            if defined $default_value;
+
         return;
     };
 }
@@ -295,7 +298,6 @@ sub isa_Object { ## no critic
     return sub {
         return if not defined $class;
         if ($opts{auto}) {
-            return if not $class->can('new');
             return        $class->new();
         }
         return;
@@ -519,6 +521,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 =end wikidoc
 
+=for stopwords expandtab shiftround
 
 # Local Variables:
 #   mode: cperl

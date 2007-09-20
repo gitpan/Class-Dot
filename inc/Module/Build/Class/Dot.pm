@@ -4,12 +4,22 @@
 # $HeadURL: https://class-dot.googlecode.com/svn/class-dot/inc/Module/Build/Class/Dot.pm $
 # $Revision: 6 $
 # $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
-package Module::Build::Class::Dot;
+package  # do not index on cpan.
+    Module::Build::Class::Dot;
+use base 'Module::Build';
+
 use strict;
 use warnings;
-use base 'Module::Build';
 use vars qw($VERSION);
-use English qw( -no_match_vars );
+
+use Carp        qw(croak);
+use FindBin     qw($Bin);
+use English     qw( -no_match_vars );
+
+BEGIN {
+    eval 'use Module::Build::Debian';
+}
+    
 
 $VERSION = 1.0;
 
@@ -102,3 +112,11 @@ sub log_warn {
 }
 
 1;
+
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

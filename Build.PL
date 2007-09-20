@@ -26,9 +26,10 @@ sub NO  { 0 };
 $ENV{DEVEL_COVER_OPTIONS} = '-ignore,blib/Class/InsideOut/Policy/Modwheel.pm';
 my $builder = Module::Build::Class::Dot->new(
     module_name          => 'Class::Dot',
-    dist_version        => '1.0.3',
+    dist_version        => '1.0.4',
     license              => 'perl',
     dist_author          => 'Ask Solem <ASKSH@cpan.org>',
+    dh_make_perl         => '/opt/local/bin/xsaaaa',
     all_from             => 'lib/Class/Dot/Model.pm',
     dynamic_config       => NO,
     sign                 => NO, # asksh: have to find out why my signature fails.

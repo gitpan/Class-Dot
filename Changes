@@ -1,5 +1,11 @@
 Revision history for Class-Dot
 
+1.0.4  Thu Sep 20 16:30:11 CEST 2007
+    -  The created constructor (when using -new import tag option) didn't
+       search ISA properly while setting properties using options to new().
+    -  isa_Data now sets default value properly.
+
+
 1.0.3  Thu Sep 12 16:55:48 2007
     -  isa_Int and isa_String set the initial value to 0 and q{} when no
        default value was defined, this resulted in `defined $property` to
