@@ -1,5 +1,12 @@
 Revision history for Class-Dot
 
+1.0.5  Mon Oct 01 17:13:03 CEST 2007
+    -  isa_File added (a Filehandle).
+    -  isa_Code added (a code reference).
+    -  Added import option: -rebuild.
+       If you return something blessed from your BUILD method and -rebuild
+       option is set, it will set $self to that.
+
 1.0.4  Thu Sep 20 16:30:11 CEST 2007
     -  The created constructor (when using -new import tag option) didn't
        search ISA properly while setting properties using options to new().

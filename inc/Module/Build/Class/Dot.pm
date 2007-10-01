@@ -1,9 +1,9 @@
-# $Id: Dot.pm 6 2007-09-13 10:22:19Z asksol $
+# $Id: Dot.pm 7 2007-09-21 10:11:26Z asksol $
 # $Source: /opt/CVS/Getopt-LL/inc/Module/Build/Getopt/LL.pm,v $
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/class-dot/inc/Module/Build/Class/Dot.pm $
-# $Revision: 6 $
-# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
+# $Revision: 7 $
+# $Date: 2007-09-21 12:11:26 +0200 (Fri, 21 Sep 2007) $
 package  # do not index on cpan.
     Module::Build::Class::Dot;
 use base 'Module::Build';

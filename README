@@ -94,8 +94,12 @@ SUBROUTINES/METHODS
     The property is a object. (Does not really set a default value.).
 
    "isa_Data()"
-    The object is of a not yet defined data type.
+    The property is of a not yet defined data type.
 
+   "isa_Code()"
+    The property is a subroutine reference.
+
+   "isa_File()"
   INSTANCE METHODS
    "->properties_for_class($class)"
     Return the list of properties for a class/object that uses the powers.

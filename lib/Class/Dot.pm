@@ -1,38 +1,39 @@
-# $Id: Dot.pm 6 2007-09-13 10:22:19Z asksol $
+# $Id: Dot.pm 9 2007-10-01 15:14:47Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
-# $Revision: 6 $
-# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
+# $Revision: 9 $
+# $Date: 2007-10-01 17:14:47 +0200 (Mon, 01 Oct 2007) $
 package Class::Dot;
 
 use strict;
 use warnings;
-use version; our $VERSION = qv('1.0.4');
+use version qw(qv); our $VERSION = qv('1.0.5');
 use 5.006_001;
 
 use Carp qw(croak);
 
 my @EXPORT_OK = qw(
     property
-    isa_String isa_Int isa_Array isa_Hash isa_Data isa_Object
+    isa_String isa_Int isa_Array isa_Hash
+    isa_Data isa_Object isa_Code isa_File
 );
 
 my %EXPORT_CLASS = (':std'  => [@EXPORT_OK],);
 
-my %OPTIONS_FOR;
-my %PROPERTIES_FOR;
+our %OPTIONS_FOR     = ();
+our %PROPERTIES_FOR  = ();
 
 sub import { ## no critic
     my $this_class   = shift;
     my $caller_class = caller;
 
-    my %options;
+    my $options = { };
     my $export_class;
     my @subs;
     for my $arg (@_) {
         if ($arg =~ m/^-/xms) {
-            $options{$arg} = 1;
+            $options->{$arg} = 1;
         }
         elsif ($arg =~ m/^:/xms) {
             croak(   'Only one export class can be used. '
@@ -45,6 +46,7 @@ sub import { ## no critic
             push @subs, $arg;
         }
     }
+    $OPTIONS_FOR{$caller_class} = $options;
 
     my @subs_to_export=
            $export_class
@@ -57,7 +59,7 @@ sub import { ## no critic
         _install_sub_from_class($this_class, $sub_to_export => $caller_class);
     }
 
-    if ($options{'-new'}) {
+    if ($options->{'-new'}) {
         my $constructor = _create_constructor($caller_class);
         _install_sub_from_coderef($constructor => $caller_class, 'new');
     }
@@ -65,7 +67,6 @@ sub import { ## no critic
     my $destructor = _create_destroy_method($caller_class);
     _install_sub_from_coderef($destructor => $caller_class, 'DESTROY');
 
-    $OPTIONS_FOR{$caller_class}    = \%options;
     $PROPERTIES_FOR{$caller_class} = {};
 
     return;
@@ -94,6 +95,7 @@ sub _install_sub_from_coderef {
 
 sub _create_constructor {
     my ($CALLPKG) = @_;
+    my $options = $OPTIONS_FOR{$CALLPKG};
 
     return sub {
         my ($class, $options_ref) = @_;
@@ -125,7 +127,12 @@ sub _create_constructor {
 
         no strict 'refs'; ## no critic
         if (my $build_ref = *{ $class . '::BUILD' }{CODE}) { ## no critic
-            $build_ref->($self, $options_ref);
+            $Carp::CallLevel++; ## no critic
+            my $ret = $build_ref->($self, $options_ref);
+            $Carp::CallLevel--; ## no critic
+            if ($options->{'-rebuild'} && ref $ret) {
+                $self = $ret;
+            }
         }
 
         return $self;
@@ -289,6 +296,28 @@ sub isa_Data   { ## no critic
     };
 }
 
+sub isa_Code (;&) { ## no critic
+    my $code_ref = shift;
+
+    return sub {
+        return defined $code_ref ? $code_ref : sub { };
+    }
+}
+
+sub isa_File   { ## no critic
+    my $filehandle = shift;
+    
+    return sub {
+        if (defined $filehandle) {
+            return $filehandle;
+        }
+        else {
+            require FileHandle;
+            return FileHandle->new( );
+        }
+    }
+}
+
 sub isa_Object { ## no critic
     my $class = shift;
     my %opts;
@@ -425,9 +454,17 @@ The property is a object.
 (Does not really set a default value.).
 
 === {isa_Data()}
-=for apidoc CODEREF = Class::Dot::isa_Data()
+=for apidoc CODEREF = Class::Dot::isa_Data($data)
 
-The object is of a not yet defined data type.
+The property is of a not yet defined data type.
+
+=== {isa_Code()}
+=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
+
+The property is a subroutine reference.
+
+=== {isa_File()}
+=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
 
 == INSTANCE METHODS
 

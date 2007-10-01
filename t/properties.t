@@ -11,7 +11,7 @@ use Scalar::Util qw(refaddr);
 use TestProperties;
 use Cat;
 
-our $THIS_TEST_HAS_TESTS = 40;
+our $THIS_TEST_HAS_TESTS = 46;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -70,7 +70,6 @@ ok(! $testo->string, 'string with no default value is not true' );
 
 ok(! defined $testo->string, 'string with no default value is not defined' );
 
-
 is($testo->defval, 'la liberation', 'default value for isa_String');
 
 eval '$testo->bar("this should croak")';
@@ -78,3 +77,16 @@ like($EVAL_ERROR,
     qr/You tried to set a value with bar\(\)\. Did you mean set_bar\(\) \?/,
     'croak on bar("value")'
 );
+
+isa_ok($testo->code,    'CODE', 'return value of isa_Code w/o default');
+isa_ok($testo->codedef, 'CODE', 'return value of isa_Code w/  default');
+is($testo->codedef->(), 10, 'isa_Code property is callable');
+isa_ok($testo->filehandle, 'FileHandle',
+    'return value of isa_File w/o default'
+);
+isa_ok($testo->myself, 'GLOB',
+    'return value of isa_File w/ default'
+);
+my $fh = $testo->myself;
+my $line = <$fh>;
+like($line, qr/use strict/, 'read from a isa_File');

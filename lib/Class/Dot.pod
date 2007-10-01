@@ -124,9 +124,19 @@ The property is a object.
 
 =head3 C<<< isa_Data() >>>
 
-=for apidoc CODEREF = Class::Dot::isa_Data()
+=for apidoc CODEREF = Class::Dot::isa_Data($data)
 
-The object is of a not yet defined data type.
+The property is of a not yet defined data type.
+
+=head3 C<<< isa_Code() >>>
+
+=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
+
+The property is a subroutine reference.
+
+=head3 C<<< isa_File() >>>
+
+=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
 
 =head2 INSTANCE METHODS
 
