@@ -11,7 +11,7 @@ use Scalar::Util qw(refaddr);
 use TestProperties;
 use Cat;
 
-our $THIS_TEST_HAS_TESTS = 46;
+our $THIS_TEST_HAS_TESTS = 59;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -34,7 +34,7 @@ isa_ok( $testo->obj,  'Cat',
    'isa_Object creates a new object of the type it is by default'
 );
 is(refaddr($testo2->obj), refaddr($cat),
-   'isa_Object doesn\'t creat new object if object already set.'
+   'isa_Object doesn\'t create new object if object already set.'
 );
 ok( ! defined $testo->mystery_object, 'isa_Object with no default class' );
 ok(! $testo->foo, 'isa_Data has no default value' );
@@ -90,3 +90,31 @@ isa_ok($testo->myself, 'GLOB',
 my $fh = $testo->myself;
 my $line = <$fh>;
 like($line, qr/use strict/, 'read from a isa_File');
+
+can_ok($testo, '__setattr__');
+can_ok($testo, '__getattr__');
+can_ok($testo, '__hasattr__');
+ok( $testo->__hasattr__('string'),    '->__hasattr__() existing' );
+ok(!$testo->__hasattr__('stringnot'), '->__hasattr__() nonexisting' );
+ok( $testo->__setattr__('string', 'the blob jumps high over the flob'),
+	'->__setattr__() with existing attr'
+);
+ok(!$testo->__setattr__('stringnot', 'the blob jumps high over the flob'),
+	'->__setattr__() with nonexisting attr'
+);
+is( $testo->__getattr__('string'), 'the blob jumps high over the flob',
+	'->__getattr()__ set after ->__setattr__()'
+);
+is( $testo->string, 'the blob jumps high over the flob',
+	'->$property() set after ->__setattr__()'
+);
+
+is( $testo->override, 'not modified', 'override with after_property_set');
+
+$testo->set_override('modified');
+is( $testo->override, 'modified',     'override with after_property_get');
+
+is( $testo->override2, 'xxx not modified', 'override with sub set_xxx {...}');
+
+$testo->set_override('xxx modified');
+is( $testo->override, 'xxx modified',     'override with sub xxx {...}');

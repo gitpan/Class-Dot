@@ -1,33 +1,104 @@
 Revision history for Class-Dot
 
-1.0.5  Mon Oct 01 17:13:03 CEST 2007
+2.0_01 Sun Oct 28 17:16:32 CEST 2007 [asksh@cpan.org]
+
+    - Code cleanup.
+
+    - Class::Dot now installs new methods to the object it creates:
+
+        - __setattr__($self, $attribute_name, $value):
+        
+        Set a object attribute. This is great for those times when you want to
+        do this:
+    
+            my %some_default_values = (
+                'foo' => 'bar',
+                'bar' => 'baz',
+                'xuzzy' => 'fuzzy',
+            );
+    
+            while (my ($attr_name, $attr_value) = each %some_default_values) {
+            my $set_attribute = 'set_' . $attr_name;
+            if ($object->can($set_attribute)) {
+                $object->$set_attribute( $attr_value );
+                }
+            }
+    
+
+        This isn't very pretty, so that's why you now can do this:
+
+            while (my ($attr_name, $attr_value) = each %some_default_values) {
+                $object->__setattr__($attr_name, $attr_value);
+            }
+
+
+        - $val = __getattr__($self, $attribute_name)
+
+        Get an attributes value.
+
+        - $bool = __hasattr__($self, $attribute_name)
+
+        Returns true if $self has the attribute $attribute_name.
+
+    - Now you can't do this anymore;
+
+        $object->{attribute} = $value;
+
+    because now the attributes are better hidden in the object's hash.
+    You can probably find out how they are saved by doing keys %{ $object },
+    but we _recommend against accessing that hash directly_!.
+
+    
+    - Now you can override properties simply by writing;
+
+        property name => isa_String('foo');
+
+        sub name {
+            my ($self) = @_;
+            warn 'Accessing name property';
+            return $self->__getattr__('name');
+        }
+
+        sub set_name {
+            my ($self, $new_name) = @_;
+            warn $self->__getattr__('name') . " is changing name to $new_name";
+            $self->__setattr__('name', $new_name);
+            return;
+        }
+
+    instead of using after_property_get() and after_property_set().
+
+    (Note: Just be sure not to use property() in a BEGIN block, you have to use
+    after_property_* to do that!)
+
+1.0.5  Mon Oct 01 17:13:03 CEST 2007 [asksh@cpan.org]
     -  isa_File added (a Filehandle).
     -  isa_Code added (a code reference).
     -  Added import option: -rebuild.
        If you return something blessed from your BUILD method and -rebuild
        option is set, it will set $self to that.
 
-1.0.4  Thu Sep 20 16:30:11 CEST 2007
+1.0.4  Thu Sep 20 16:30:11 CEST 2007 [asksh@cpan.org]
     -  The created constructor (when using -new import tag option) didn't
        search ISA properly while setting properties using options to new().
     -  isa_Data now sets default value properly.
 
 
-1.0.3  Thu Sep 12 16:55:48 2007
+1.0.3  Thu Sep 12 16:55:48 2007 [asksh@cpan.org]
     -  isa_Int and isa_String set the initial value to 0 and q{} when no
        default value was defined, this resulted in `defined $property` to
        return true.
 
-1.0.2  Tue Sep 12 10:13:04 2007
+1.0.2  Tue Sep 12 10:13:04 2007 [asksh@cpan.org]
     -  Subversion now hosted at googlecode.
        http://class-dot.googlecode.comsearch
 
-1.0.1  Tue Sep 11 24:36:32 2007
+1.0.1  Tue Sep 11 24:36:32 2007 [asksh@cpan.org]
     -  isa_Object no longer automaticly makes new objects if the property is
        not set. If you want that, use: isa_Object('My::Class', auto => 1);
     -  Fixed problems with isa_Object where it would try to make
        a new instance even though no default class was defined.
 
-0.0.1  Sun Sep  9 02:22:58 2007
+0.0.1  Sun Sep  9 02:22:58 2007 [asksh@cpan.org]
        Initial release.
 

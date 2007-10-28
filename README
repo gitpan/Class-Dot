@@ -1,8 +1,8 @@
 NAME
-    Class::Dot - Simple way of creating accessor methods.
+    Class::Dot - Simple and fast properties for Perl 5.
 
 VERSION
-    This document describes Class::Dot version v1.0.
+    This document describes Class::Dot version v2.0.0 (beta 1).
 
 SYNOPSIS
          package Animal::Mammal::Carnivorous::Cat;
@@ -57,7 +57,126 @@ SYNOPSIS
          push @{ $albert->family }, [$lucy  ];
 
 DESCRIPTION
-    A simple module for creating accessor methods with default types.
+    Simple and fast properties for Perl 5.
+
+    "Class::Dot" also lets you define types for your properties, like Hash,
+    String, Int, File, Code, Array and so on.
+
+    All the types are populated with sane defaults, so you no longer have to
+    write code like this:
+
+        sub make_healthy {
+           my ($self) = @_;
+           my $state  = $self->state;
+           my $fur    = $self->fur;
+ 
+           $state ||= { }; # <-- you don't have to do this with class dot.
+           $fur   ||= [ ]; # <-- same with this.
+        }
+
+    Class::Dot can also create a default constructor for you if you pass it
+    the "-new" option on the use line:
+
+        use Class::Dot qw(-new :std);
+
+    If you pass a hashref to the constructor, it will use them as values for
+    the properties:
+
+        my $cat = Animal::Mammal::Carnivorous::Cat->new({
+           gender => 'male',
+           fur    => ['black', 'white', 'short'],
+        }
+
+    If you want to intialize something at object construction time you can!
+    Just define a method named "BUILD". "Class::Dot" will pass on the
+    instance and all the arguments that was sent to "new".
+
+        sub BUILD {
+           my ($self, $options_ref) = @_;
+ 
+           warn 'Someone created a ', ref $self;
+ 
+           return;
+        }
+
+    The return value of the "BUILD" method doesn't mean anything, that is
+    unleass you have to "-rebuild" option on. When the "-rebuild" option is
+    on, "Class::Dot" uses the return value of BUILD as the new object, so
+    you can create a abstract factory or similar:
+
+        use Class::Dot qw(-new -rebuild :std);
+ 
+        sub BUILD {
+           my ($self, $option_ref) = @_;
+ 
+           if (exists $options_ref->{delegate_to}) {
+              my $new_class = $options_ref->{delegate_to};
+              my $new_instasnce = $new_class->new($options_ref);
+ 
+              return $new_instance;
+           }
+ 
+           return;
+        }
+
+    A big value of using properties is that you can override them at a later
+    point to make them support additional functionality, like setting a
+    hardware flag, logging, etc. In Class::Dot you override a property
+    simply by defining their accessors:
+
+        property name => isa_String();
+ 
+        sub name {   # <-- overrides the get accessor
+           my ($self) = @_;
+ 
+           warn 'Acessing the name property';
+ 
+           return $self->__getattr__('name');
+        }
+ 
+        sub set_name { # <-- overrides the set accessor
+           my ($self, $new_name) = @_;
+ 
+           warn $self->__getattr__('name'), " changed name to $new_name!";
+ 
+           $self->__setattr__('name', $new_name);
+ 
+           return;
+        }
+
+    There is one exception where this won't work, though. That is if you
+    define a property in a "BEGIN" block. If you do that you have to use the
+    "after_property_get()" and "after_property_set()" functions:
+
+        BEGIN {
+           use Class::Dot qw(-new :std);
+           property name => isa_String();
+        }
+ 
+        after_property_get name => sub {
+           my ($self) = @_;
+ 
+           warn 'Acessing the name property';
+ 
+           return $self->__getattr__('name');
+        }; # <-- the semicolon is required here!
+ 
+        after_property_set name => sub {
+           my ($self, $new_name) = @_;
+ 
+           warn $self->__getattr__('name'), " changed name to $new_name!";
+ 
+           $self->__setattr__('name', $new_name);
+ 
+           return;
+        }; # <-- the semicolon is required here!
+
+    You can read more about "Class::Dot" in the Class::Dot::Manual::Cookbook
+    and Class::Dot::Manual::FAQ. (Not yet written for the 2.0 beta release).
+
+    Have a good time working with "Class::Dot", and please report any bug
+    you might find, or send feature requests. (although "Class::Dot" is not
+    meant to be Moose, it's meant to be simple and fast).
 
 SUBROUTINES/METHODS
   CLASS METHODS
@@ -77,6 +196,38 @@ SUBROUTINES/METHODS
          set_bar($value)
 
     with default return values -hello world- and -303-.
+
+   "after_property_get($attr_name, \&code)"
+    Override the get accessor method for a property.
+
+    Example:
+
+        property name => isa_String;
+ 
+        after_property_get name => sub {
+           my ($self) = @_;
+ 
+           warn 'Accessing the name property of ' . ref $self;
+ 
+           return $self->__getattr__('name');
+        }; # <- needs the semi-colon at the end!
+
+   "after_property_set($attr_name, \&code)"
+    Override the set accessor method for a property.
+
+    Example:
+
+        property name => isa_String;
+ 
+        after_property_set name => sub {
+           my ($self, $new_name) = @_;
+ 
+           warn $self->__getattr__('name') . " is canging name to $new_name";
+ 
+           $self->__setattr__('name', $new_name);
+ 
+           return;
+        }; # <- needs the semi-colon at the end!
 
    "isa_String($default_value)"
     The property is a string.

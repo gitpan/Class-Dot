@@ -1,9 +1,9 @@
 ---
 name: Class-Dot
-version: 1.0.5
+version: 2.0.0_01
 author:
   - 'Ask Solem <ASKSH@cpan.org>'
-abstract: Simple way of creating accessor methods.
+abstract: Simple and fast properties for Perl 5.
 license: perl
 resources:
   license: http://dev.perl.org/licenses/
@@ -18,8 +18,8 @@ dynamic_config: 0
 provides:
   Class::Dot:
     file: lib/Class/Dot.pm
-    version: 1.0.5
-generated_by: Module::Build version 0.2808
+    version: 2.0.0_01
+generated_by: Module::Build version 0.280801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

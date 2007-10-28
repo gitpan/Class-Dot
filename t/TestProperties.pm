@@ -25,5 +25,37 @@ property filehandle => isa_File;
 open my $myself, '<', $PROGRAM_NAME;
 property myself     => isa_File($myself);
 
+property override  => isa_String('obladi oblada');
+{
+    my $MODIFY_ME = 'not modified';
+
+    after_property_get override => sub {
+        return $MODIFY_ME;        
+    };
+
+    after_property_set override => sub {
+        my ($self, $value) = @_;
+        $MODIFY_ME = $value;
+        return;
+    };
+
+}
+
+property override2 => isa_String('oblada obladi');
+{
+    my $MODIFY_ME = 'xxx not modified';
+    
+    sub override2 {
+        return $MODIFY_ME;
+    }
+
+    sub set_override2 {
+        my ($self, $value) = @_;
+        $MODIFY_ME = $value;
+        return;
+    }
+}
+
+
 1;
 

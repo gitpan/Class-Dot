@@ -1,28 +1,46 @@
-# $Id: Dot.pm 9 2007-10-01 15:14:47Z asksol $
+# $Id: Dot.pm 13 2007-10-28 16:43:56Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
-# $Revision: 9 $
-# $Date: 2007-10-01 17:14:47 +0200 (Mon, 01 Oct 2007) $
+# $Revision: 13 $
+# $Date: 2007-10-28 17:43:56 +0100 (Sun, 28 Oct 2007) $
 package Class::Dot;
 
 use strict;
 use warnings;
-use version qw(qv); our $VERSION = qv('1.0.5');
+use version qw(qv);
 use 5.006_001;
 
 use Carp qw(croak);
 
+our $VERSION   = qv('2.0.0_01');
+our $AUTHORITY = 'cpan:ASKSH';
+
 my @EXPORT_OK = qw(
-    property
+    property after_property_set after_property_get
     isa_String isa_Int isa_Array isa_Hash
     isa_Data isa_Object isa_Code isa_File
 );
 
-my %EXPORT_CLASS = (':std'  => [@EXPORT_OK],);
+my $INTERNAL_ATTR_NOISE = '__x__';
+
+my %EXPORT_CLASS = (
+   ':std'  => [@EXPORT_OK],
+);
 
 our %OPTIONS_FOR     = ();
 our %PROPERTIES_FOR  = ();
+
+my %__TYPE_DICT__ = (
+   'Array'     => \&isa_Array,
+   'Code'      => \&isa_Code,
+   'Data'      => \&isa_Data,
+   'File'      => \&isa_File,
+   'Hash'      => \&isa_Hash,
+   'Int'       => \&isa_Int,
+   'Object'    => \&isa_Object,
+   'String'    => \&isa_String,
+);
 
 sub import { ## no critic
     my $this_class   = shift;
@@ -48,9 +66,8 @@ sub import { ## no critic
     }
     $OPTIONS_FOR{$caller_class} = $options;
 
-    my @subs_to_export=
-           $export_class
-        && $EXPORT_CLASS{$export_class}
+    my @subs_to_export
+        = $export_class && $EXPORT_CLASS{$export_class}
         ? (@{ $EXPORT_CLASS{$export_class} }, @subs)
         : @subs;
 
@@ -59,13 +76,20 @@ sub import { ## no critic
         _install_sub_from_class($this_class, $sub_to_export => $caller_class);
     }
 
+
+    my %INSTALL_METHOD = (
+        DESTROY     => _create_destroy_method($caller_class),
+        __setattr__ => _create_setattr($caller_class),
+        __getattr__ => _create_getattr($caller_class),
+        __hasattr__ => _create_hasattr($caller_class),
+    );
     if ($options->{'-new'}) {
-        my $constructor = _create_constructor($caller_class);
-        _install_sub_from_coderef($constructor => $caller_class, 'new');
+        $INSTALL_METHOD{'new'} = _create_constructor($caller_class);
     }
 
-    my $destructor = _create_destroy_method($caller_class);
-    _install_sub_from_coderef($destructor => $caller_class, 'DESTROY');
+    while (my ($method_name, $method_ref) = each %INSTALL_METHOD) {
+        _install_sub_from_coderef($method_ref => $caller_class, $method_name);
+    }
 
     $PROPERTIES_FOR{$caller_class} = {};
 
@@ -85,13 +109,54 @@ sub _install_sub_from_class {
 
 sub _install_sub_from_coderef {
     my ($coderef, $pkg_to, $sub_name) = @_;
-    my $to = join q{::}, ($pkg_to,   $sub_name);
+    my $to = join q{::}, ($pkg_to, $sub_name);
 
-    no strict 'refs'; ## no critic
+    no strict   'refs';     ## no critic
+    no warnings 'redefine'; ## no critic
     *{$to} = $coderef;
 
     return;
 }
+
+sub _create_setattr {
+	my ($CALLPKG) = @_;
+	my $options = $OPTIONS_FOR{$CALLPKG};
+
+	return sub {
+		my ($self, $attribute, $value) = @_;
+        my $property_key
+            = $INTERNAL_ATTR_NOISE . $attribute .  $INTERNAL_ATTR_NOISE;
+		my $properties = __PACKAGE__->properties_for_class($self);
+		return if not $properties->{$attribute};
+		$self->{$property_key} = $value;
+		return 1;
+	}
+}
+
+sub _create_getattr {
+	my ($CALLPKG) = @_;
+
+	return sub {
+		my ($self, $attribute) = @_;
+        my $property_key
+            = $INTERNAL_ATTR_NOISE . $attribute .  $INTERNAL_ATTR_NOISE;
+		my $properties = __PACKAGE__->properties_for_class($self);
+		return if not $properties->{$attribute};
+		return $self->{$property_key};
+	}
+}
+
+sub _create_hasattr {
+	my ($CALLPKG) = @_;
+	
+	return sub {
+		my ($self, $attribute) = @_;
+		my $properties = __PACKAGE__->properties_for_class($self);
+		return if not $properties->{$attribute};
+		return 1;
+	}
+}
+
 
 sub _create_constructor {
     my ($CALLPKG) = @_;
@@ -184,25 +249,48 @@ sub property (@) { ## no critic
     return if not $property;
 
     my $caller = caller;
+    my $set_property = "set_$property";
 
-    no strict   'refs';     ## no critic
-    no warnings 'redefine'; ## no critic
 
-    my $set_property = 'set_' . $property;
+    no strict 'refs'; ## no critic
+    if (not *{ $caller . "::$property" }{CODE}) {
+        my $get_accessor = _create_get_accessor($property, $isa);
+        _install_sub_from_coderef($get_accessor => $caller, $property);
+    }
 
-    # Callpkg::property()
-    *{ $caller . q{::} . $property }= _create_get_accessor($property, $isa);
-
-    # Callpkg::set_property()
-    *{ $caller . q{::} . $set_property }= _create_set_accessor($property);
+    if (not *{ $caller . "::$set_property" }{CODE}) {
+        my $set_accessor = _create_set_accessor($property, $isa);
+        _install_sub_from_coderef($set_accessor => $caller, $set_property);
+    }
 
     $PROPERTIES_FOR{$caller}->{$property} = 1;
 
     return;
 }
 
+sub after_property_get (@&) { ## no critic
+    my ($property, $func_ref) = @_;
+    my $caller = caller;
+
+    _install_sub_from_coderef($func_ref => $caller, $property);
+
+    return;
+}
+
+sub after_property_set (@&) { ## no critic
+    my ($property, $func_ref) = @_;
+    my $caller = caller;
+    my $set_property = "set_$property";
+
+    _install_sub_from_coderef($func_ref => $caller, $set_property);
+
+    return;
+}
+
 sub _create_get_accessor {
     my ($property, $isa) = @_;
+    my $property_key
+        = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
 
     return sub {
         my $self = shift;
@@ -213,35 +301,35 @@ sub _create_get_accessor {
                     ."you mean set_$property() ?");
         }
 
-        if (!exists $self->{$property}) {
-            $self->{$property} =
+        if (!exists $self->{$property_key}) {
+            $self->{$property_key} =
                 ref $isa eq 'CODE'
                 ? $isa->($self)
                 : $isa;
         }
 
-        return $self->{$property};
+        return $self->{$property_key};
     };
 }
 
 sub _create_set_accessor {
     my ($property) = @_;
+    my $property_key
+        = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
 
     return sub  {
         my ($self, $value) = @_;
-        $self->{$property} = $value;
+        $self->{$property_key} = $value;
         return;
-        }
+    }
 }
 
 sub isa_String { ## no critic
     my ($default_value) = @_;
 
     return sub {
-
         return $default_value
             if defined $default_value;
-
         return;
     };
 }
@@ -250,10 +338,8 @@ sub isa_Int    { ## no critic
     my ($default_value) = @_;
 
     return sub {
-
         return $default_value
             if defined $default_value;
-
         return;
     };
 }
@@ -262,10 +348,9 @@ sub isa_Array  { ## no critic
     my @default_values = @_;
 
     return sub {
-
         return scalar @default_values
             ? \@default_values
-            : [];
+            : [ ];
     };
 }
 
@@ -273,14 +358,12 @@ sub isa_Hash   { ## no critic
     my %default_values = @_;
 
     return sub {
-
         return scalar keys %default_values
             ? \%default_values
-            : {};
+            : { };
 
         # have to test if there are any entries in the hash
         # so we return a new anonymous hash if it ain't.
-
     };
 }
 
@@ -288,10 +371,8 @@ sub isa_Data   { ## no critic
     my ($default_value) = @_;
 
     return sub {
-
         return $default_value
             if defined $default_value;
-
         return;
     };
 }
@@ -341,11 +422,11 @@ __END__
 
 = NAME
 
-Class::Dot - Simple way of creating accessor methods.
+Class::Dot - Simple and fast properties for Perl 5.
 
 = VERSION
 
-This document describes Class::Dot version v1.0.
+This document describes Class::Dot version v2.0.0 (beta 1).
 
 = SYNOPSIS
 
@@ -402,7 +483,132 @@ This document describes Class::Dot version v1.0.
 
 = DESCRIPTION
 
-A simple module for creating accessor methods with default types.
+Simple and fast properties for Perl 5.
+
+{Class::Dot} also lets you define types for your properties, like Hash,
+String, Int, File, Code, Array and so on.
+
+All the types are populated with sane defaults, so you no longer have to
+write code like this:
+
+   sub make_healthy {
+      my ($self) = @_;
+      my $state  = $self->state;
+      my $fur    = $self->fur;
+
+      $state ||= { }; # <-- you don't have to do this with class dot.
+      $fur   ||= [ ]; # <-- same with this.
+   }
+
+Class::Dot can also create a default constructor for you if you pass it the
+{-new} option on the use line:
+
+   use Class::Dot qw(-new :std);
+
+If you pass a hashref to the constructor, it will use them as values for the
+properties:
+
+   my $cat = Animal::Mammal::Carnivorous::Cat->new({
+      gender => 'male',
+      fur    => ['black', 'white', 'short'],
+   }
+
+      
+If you want to intialize something at object construction time you can! Just
+define a method named {BUILD}. {Class::Dot} will pass on the instance and
+all the arguments that was sent to {new}.
+
+   sub BUILD {
+      my ($self, $options_ref) = @_;
+
+      warn 'Someone created a ', ref $self;
+   
+      return;
+   }
+
+
+The return value of the {BUILD} method doesn't mean anything, that is unleass
+you have to {-rebuild} option on. When the {-rebuild} option is on,
+{Class::Dot} uses the return value of BUILD as the new object, so you can
+create a abstract factory or similar:
+
+   use Class::Dot qw(-new -rebuild :std);
+
+   sub BUILD {
+      my ($self, $option_ref) = @_;
+
+      if (exists $options_ref->{delegate_to}) {
+         my $new_class = $options_ref->{delegate_to};
+         my $new_instasnce = $new_class->new($options_ref);
+
+         return $new_instance;
+      }
+
+      return;
+   }
+
+A big value of using properties is that you can override them at a later point
+to make them support additional functionality, like setting a hardware flag,
+logging, etc. In Class::Dot you override a property simply by defining their
+accessors:
+
+   property name => isa_String();
+
+   sub name {   # <-- overrides the get accessor
+      my ($self) = @_;
+
+      warn 'Acessing the name property';
+
+      return $self->__getattr__('name');
+   }
+
+
+   sub set_name { # <-- overrides the set accessor
+      my ($self, $new_name) = @_;
+
+      warn $self->__getattr__('name'), " changed name to $new_name!";
+
+      $self->__setattr__('name', $new_name);
+
+      return;
+   }
+
+
+There is one exception where this won't work, though. That is if you define a
+property in a {BEGIN} block. If you do that you have to use the
+{after_property_get()} and {after_property_set()} functions:
+
+   BEGIN {
+      use Class::Dot qw(-new :std);
+      property name => isa_String();
+   }
+
+   after_property_get name => sub {
+      my ($self) = @_;
+
+      warn 'Acessing the name property';
+
+      return $self->__getattr__('name');
+   }; # <-- the semicolon is required here!
+
+
+   after_property_set name => sub {
+      my ($self, $new_name) = @_;
+
+      warn $self->__getattr__('name'), " changed name to $new_name!";
+
+      $self->__setattr__('name', $new_name);
+
+      return;
+   }; # <-- the semicolon is required here!
+
+You can read more about {Class::Dot} in the [Class::Dot::Manual::Cookbook] and
+[Class::Dot::Manual::FAQ]. (Not yet written for the 2.0 beta release).
+
+Have a good time working with {Class::Dot}, and please report any bug you
+might find, or send feature requests. (although {Class::Dot} is not meant to
+be [Moose], it's meant to be simple and fast).
+   
 
 = SUBROUTINES/METHODS
 
@@ -426,6 +632,40 @@ will create the methods:
     set_bar($value)
 
 with default return values -hello world- and -303-.
+
+=== {after_property_get($attr_name, \&code)}
+
+Override the get accessor method for a property.
+
+Example:
+
+   property name => isa_String;
+
+   after_property_get name => sub {
+      my ($self) = @_;
+      
+      warn 'Accessing the name property of ' . ref $self;
+      
+      return $self->__getattr__('name');
+   }; # <- needs the semi-colon at the end!
+
+=== {after_property_set($attr_name, \&code)}
+
+Override the set accessor method for a property.
+
+Example:
+
+   property name => isa_String;
+   
+   after_property_set name => sub {
+      my ($self, $new_name) = @_;
+
+      warn $self->__getattr__('name') . " is canging name to $new_name";
+
+      $self->__setattr__('name', $new_name);
+
+      return;
+   }; # <- needs the semi-colon at the end!
 
 === {isa_String($default_value)}
 =for apidoc CODEREF = Class::Dot::isa_String(data|CODEREF $default_value)
