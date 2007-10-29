@@ -1,3 +1,9 @@
+# $Id: perlcritic.t 24 2007-10-29 17:15:19Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/perlcritic.t $
+# $Revision: 24 $
+# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;
 use warnings;
 use File::Spec;
@@ -25,3 +31,10 @@ Test::Perl::Critic->import( -profile => $rcfile );
 # TODO inc/M/ + inc/Module/Build/M.pm
 all_critic_ok('lib/');
 
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

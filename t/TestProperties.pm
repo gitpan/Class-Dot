@@ -1,6 +1,14 @@
+# $Id: TestProperties.pm 27 2007-10-29 17:29:12Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/TestProperties.pm $
+# $Revision: 27 $
+# $Date: 2007-10-29 18:29:12 +0100 (Mon, 29 Oct 2007) $
 package TestProperties;
+
 use strict;
 use warnings;
+
 use Class::Dot qw( -new :std );
 use FindBin qw($Bin);
 use lib $Bin;
@@ -20,7 +28,13 @@ property 'nodefault';
 property string => isa_String();
 property mystery_object => isa_Object();
 property code   => isa_Code;
-property codedef => isa_Code {return 10};
+if ($] >= 5.00800) {
+   eval 'property codedef => isa_Code {return 10}';
+}
+else {
+   property codedef => isa_Code sub {return 10};
+}
+   
 property filehandle => isa_File;
 open my $myself, '<', $PROGRAM_NAME;
 property myself     => isa_File($myself);
@@ -59,3 +73,9 @@ property override2 => isa_String('oblada obladi');
 
 1;
 
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

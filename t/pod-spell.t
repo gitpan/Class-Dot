@@ -1,3 +1,9 @@
+# $Id: pod-spell.t 24 2007-10-29 17:15:19Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/pod-spell.t $
+# $Revision: 24 $
+# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;
 use warnings;
 use Test::More;
@@ -6,7 +12,7 @@ use File::Spec;
 use File::Basename qw(basename);
 use FileHandle;
 use English qw( -no_match_vars );
-use 5.006_001;
+use 5.006000;
 
 my @POD_FILES = (
     [ qw(lib Class Dot.pm) ],
@@ -80,8 +86,10 @@ for my $stopword_file (@STOPWORD_FILES) {
     open $fh, "<$this_file" 
         or warn, next STOPWORDFILE; ## no critic
 
+    LINE:
     for my $line (<$fh>) {
         chomp $line;
+        next LINE if $line =~ m/^#/xms;
         $line =~ s/\A \s+   //xmsg;
         $line =~ s/   \s+ \z//xmsg;
         push @stopwords, $line;
@@ -106,3 +114,10 @@ for my $POD_entry (@POD_FILES) {
     pod_file_spelling_ok($POD_file_path, "Spelling for $POD_file");
 }
 
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

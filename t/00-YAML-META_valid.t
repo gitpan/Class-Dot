@@ -1,3 +1,9 @@
+# $Id: 00-YAML-META_valid.t 24 2007-10-29 17:15:19Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/00-YAML-META_valid.t $
+# $Revision: 24 $
+# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;
 use warnings;
 use English qw( -no_match_vars );
@@ -20,6 +26,12 @@ if ($EVAL_ERROR) {
 
 plan tests => 2;
 
-meta_spec_ok(undef, '1.2');
+meta_spec_ok(undef, '1.3');
 
 
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

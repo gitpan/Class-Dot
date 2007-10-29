@@ -1,3 +1,9 @@
+# $Id$
+# $Source$
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 ask
 solem
 hoel

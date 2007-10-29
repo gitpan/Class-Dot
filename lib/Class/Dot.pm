@@ -1,19 +1,19 @@
-# $Id: Dot.pm 13 2007-10-28 16:43:56Z asksol $
+# $Id: Dot.pm 28 2007-10-29 17:35:27Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
-# $Revision: 13 $
-# $Date: 2007-10-28 17:43:56 +0100 (Sun, 28 Oct 2007) $
+# $Revision: 28 $
+# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
 package Class::Dot;
 
 use strict;
 use warnings;
 use version qw(qv);
-use 5.006_001;
+use 5.006000;
 
 use Carp qw(croak);
 
-our $VERSION   = qv('2.0.0_01');
+our $VERSION   = qv('2.0.0_02');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my @EXPORT_OK = qw(
@@ -377,7 +377,7 @@ sub isa_Data   { ## no critic
     };
 }
 
-sub isa_Code (;&) { ## no critic
+sub isa_Code (;&;) { ## no critic
     my $code_ref = shift;
 
     return sub {
@@ -758,7 +758,19 @@ Please report any bugs or feature requests to
 
 = SEE ALSO
 
+== [Moose]
+
+A complete object system for Perl 5. It is much more complete than
+{Class::Dot}, but it is also slower.
+
+== [Class::Accessor]
+
+Simple and fast implementation of properties. However, I don't like
+the syntax ({__PACKAGE__->mk_accessors} etc).
+
 == [Class::InsideOut]
+
+For Inside-Out objects. Does not have types.
 
 = AUTHOR
 
@@ -769,11 +781,31 @@ Ask Solem, [ask@0x61736b.net].
 
 Copyright (c), 2007 Ask Solem [ask@0x61736b.net|mailto:ask@0x61736b.net].
 
-All rights reserved.
+{Class::Dot} is distributed under the Modified BSD License.
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.6 or,
-at your option, any later version of Perl 5 you may have available.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. The name of the author may not be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 
 = DISCLAIMER OF WARRANTY
 
@@ -798,7 +830,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 =end wikidoc
 
-=for stopwords expandtab shiftround
+=for stopwords vim expandtab shiftround
 
 # Local Variables:
 #   mode: cperl

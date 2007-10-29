@@ -1,5 +1,12 @@
+# $Id: cat.t 24 2007-10-29 17:15:19Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/cat.t $
+# $Revision: 24 $
+# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;
 use warnings;
+
 use Test::More;
 use FindBin qw($Bin);
 use English qw( -no_match_vars );
@@ -91,3 +98,10 @@ push @{ $albert->family }, [$lucy  ];
 is_deeply( $lucy->family,   [[$albert]], 'cat->family');
 is_deeply( $albert->family, [[$lucy  ]], 'cat->family');
 
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

@@ -1,5 +1,12 @@
 use strict;
 use warnings;
+# $Id: properties.t 28 2007-10-29 17:35:27Z asksol $
+# $Source$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/properties.t $
+# $Revision: 28 $
+# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+
 use Test::More;
 use FindBin qw($Bin);
 use English qw( -no_match_vars );
@@ -118,3 +125,10 @@ is( $testo->override2, 'xxx not modified', 'override with sub set_xxx {...}');
 
 $testo->set_override('xxx modified');
 is( $testo->override, 'xxx modified',     'override with sub xxx {...}');
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround
