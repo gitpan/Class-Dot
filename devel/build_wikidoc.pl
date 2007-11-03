@@ -1,9 +1,9 @@
-# $Id: build_wikidoc.pl 23 2007-10-29 17:11:24Z asksol $
+# $Id: build_wikidoc.pl 37 2007-11-03 20:08:48Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/devel/build_wikidoc.pl $
-# $Revision: 23 $
-# $Date: 2007-10-29 18:11:24 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/devel/build_wikidoc.pl $
+# $Revision: 37 $
+# $Date: 2007-11-03 21:08:48 +0100 (Sat, 03 Nov 2007) $
 package XXX::Build::WikiDoc;
 
 use strict;

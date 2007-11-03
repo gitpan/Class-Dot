@@ -1,11 +1,13 @@
 use strict;
 use warnings;
-# $Id: properties.t 28 2007-10-29 17:35:27Z asksol $
+# ^^^^^ Must not be moved. The first line is used in a test of isa_File!
+
+# $Id: properties.t 32 2007-10-31 14:46:57Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/properties.t $
-# $Revision: 28 $
-# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/properties.t $
+# $Revision: 32 $
+# $Date: 2007-10-31 15:46:57 +0100 (Wed, 31 Oct 2007) $
 
 use Test::More;
 use FindBin qw($Bin);
@@ -18,7 +20,7 @@ use Scalar::Util qw(refaddr);
 use TestProperties;
 use Cat;
 
-our $THIS_TEST_HAS_TESTS = 59;
+our $THIS_TEST_HAS_TESTS = 60;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -31,6 +33,9 @@ ok(! Class::Dot::property( ),
 my $testo  = TestProperties->new( );
 my $cat    = Cat->new( );
 my $testo2 = TestProperties->new({ obj => $cat });
+
+my $testo3 = TestProperties->new({ obj => $cat });
+is( $testo3->obj, $cat, 'defaults ok after second instance' );
 
 for my $property (qw(foo set_foo bar set_bar obj set_obj defval set_defval
     digit set_digit hash set_hash array set_array

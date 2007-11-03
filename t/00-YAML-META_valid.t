@@ -1,7 +1,7 @@
 # $Id: 00-YAML-META_valid.t 24 2007-10-29 17:15:19Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/00-YAML-META_valid.t $
+# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/00-YAML-META_valid.t $
 # $Revision: 24 $
 # $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;

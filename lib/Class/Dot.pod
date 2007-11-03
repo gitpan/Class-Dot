@@ -8,60 +8,75 @@ Class::Dot - Simple and fast properties for Perl 5.
 
 =head1 VERSION
 
-This document describes Class::Dot version v2.0.0 (beta 1).
+This document describes Class::Dot version v1.5.0 (stable).
 
 =head1 SYNOPSIS
 
-     package Animal::Mammal::Carnivorous::Cat;
+     # load standard types (:std) and install default constructor (-new).
+     use Class::Dot qw(-new :std);
  
-     use Class::Dot qw( :std );
+     # Property without type.
+     property 'attribute';
  
-     # A cat's properties, with their default values and type of data.
-     property gender      => isa_String('male');
-     property memory      => isa_Hash;
-     property state       => isa_Hash(instinct => 'hungry');
-     property family      => isa_Array;
-     property dna         => isa_Data;
-     property action      => isa_Data;
-     property colour      => isa_Int(0xfeedface);
-     property fur         => isa_Array('short');
+     # List of property types, doesn't need a default value.
+     property string     => isa_String('default value');
  
-      sub new {
-         my ($class, $gender) = @_;
-         my $self    = { }; # Must be anonymous hash for Class::Dot to work.
-         bless $self, $class;
+     property integer    => isa_Int(256);
  
-         $self->set_gender($gender);
+     property object     => isa_Object('MyApp::Controller');
  
-         warn sprintf('A new cat is born, it is a %s. Weeeeh!',
-             $self->gender
-         );
+     property hashref    => isa_Hash(foo => 1, bar => 2);
  
-         return $self;
+     property arrayref   => isa_Array(qw(the quick brown fox ...));
+ 
+     property filehandle => isa_File()
+ 
+     property code       => isa_Code { return 42 };
+ 
+     property any_data   => isa_Data;
+ 
+     # Object type that automaticly creates new instance if it doesn't exist.
+     property model      => isa_Object('MyApp::Model', auto => 1);
+ 
+     # Initialize something at object construction.
+     sub BUILD {
+         my ($self, $options_ref) = @_;
+ 
+         warn 'Creating a new object of type ', ref $self;
+ 
+         return;
      }
  
-     sub run {
-         while (1) {
-             die if $self->state->{dead};
+     # Do something at object destruction.
+     sub DEMOLISH {
+         my ($self) = @_;
+ 
+         warn 'Instance of class', ref $self, ' is going out of scope.';
+ 
+         return;
+     }
+ 
+     # Re-bless instance at instance construction time. (option -rebuild)
+     use Carp;
+     use Class::Dot qw(-new -rebuild :std);
+     use Class::Plugin::Util qw(require_class); # For dynamic loading of classes.
+ 
+     sub BUILD {
+         my ($self, $options_ref) = @_;
+ 
+         if (exists $options_ref->{delegate_to}) {
+             my $new_class    = $options_ref->{delegate_to};
+             if (require_class($new_class)) {
+                 my $new_instance = $new_class->new();
+                 return $new_instance;
+             }
+             else {
+                 croak "Could not load class: $new_class"
+             }
          }
+ 
+         return;
      }
- 
-     package main;
- 
-     my $albert = new Animal::Mammal::Carnivorous::Cat('male');
-     $albert->memory->{name} = 'Albert';
-     $albert->state->{appetite} = 'insane';
-     $albert->set_fur([qw(short thin shiny)]);
-     $albert->set_action('hunting');
- 
-     my $lucy = new Animal::Mammal::Carnivorous::Cat('female');
-     $lucy->memory->{name} = 'Lucy';
-     $lucy->state->{instinct => 'tired'};
-     $lucy->set_fur([qw(fluffy long)]);
-     $lucy->set_action('sleeping');
- 
-     push @{ $lucy->family   }, [$albert];
-     push @{ $albert->family }, [$lucy  ];
 
 =head1 DESCRIPTION
 

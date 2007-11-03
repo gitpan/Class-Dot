@@ -1,9 +1,9 @@
-# $Id: Dot.pm 28 2007-10-29 17:35:27Z asksol $
+# $Id: Dot.pm 47 2007-11-03 21:11:17Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
-# $Revision: 28 $
-# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/lib/Class/Dot.pm $
+# $Revision: 47 $
+# $Date: 2007-11-03 22:11:17 +0100 (Sat, 03 Nov 2007) $
 package Class::Dot;
 
 use strict;
@@ -12,15 +12,16 @@ use version qw(qv);
 use 5.006000;
 
 use Carp qw(croak);
+use Class::Dot::Types qw(:std);
 
-our $VERSION   = qv('2.0.0_02');
+our $VERSION   = qv('1.5.0');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my @EXPORT_OK = qw(
     property after_property_set after_property_get
-    isa_String isa_Int isa_Array isa_Hash
-    isa_Data isa_Object isa_Code isa_File
 );
+
+push @EXPORT_OK, @Class::Dot::Types::STD_TYPES;
 
 my $INTERNAL_ATTR_NOISE = '__x__';
 
@@ -119,8 +120,8 @@ sub _install_sub_from_coderef {
 }
 
 sub _create_setattr {
-	my ($CALLPKG) = @_;
-	my $options = $OPTIONS_FOR{$CALLPKG};
+	my ($caller_class) = @_;
+	my $options = $OPTIONS_FOR{$caller_class};
 
 	return sub {
 		my ($self, $attribute, $value) = @_;
@@ -134,7 +135,7 @@ sub _create_setattr {
 }
 
 sub _create_getattr {
-	my ($CALLPKG) = @_;
+	my ($caller_class) = @_;
 
 	return sub {
 		my ($self, $attribute) = @_;
@@ -147,20 +148,43 @@ sub _create_getattr {
 }
 
 sub _create_hasattr {
-	my ($CALLPKG) = @_;
-	
-	return sub {
+	my ($caller_class) = @_;
+
+    # For some reason, perlcritic thinks 'return sub {)'
+    # is ProhibitMixedBooleanOperators, so need no critic here.
+	return sub { ## no critic
 		my ($self, $attribute) = @_;
-		my $properties = __PACKAGE__->properties_for_class($self);
-		return if not $properties->{$attribute};
+        my $ref_self = ref $self;
+
+        my $class;
+        if ($ref_self) {
+            $class = $ref_self;
+        }
+        else {
+            $class = $self;
+        }
+
+        no strict 'refs'; ## no critic;
+        my  @isa = @{ "${class}::ISA" };
+        my $has_property = 0;
+
+        ISA:
+        for my $isa ($class, @isa) {
+            if ($PROPERTIES_FOR{$isa} && $PROPERTIES_FOR{$isa}{$attribute}) {
+                $has_property = 1;
+                last ISA;
+            }
+        }
+
+		return if not $has_property;
 		return 1;
 	}
 }
 
 
 sub _create_constructor {
-    my ($CALLPKG) = @_;
-    my $options = $OPTIONS_FOR{$CALLPKG};
+    my ($caller_class) = @_;
+    my $options = $OPTIONS_FOR{$caller_class};
 
     return sub {
         my ($class, $options_ref) = @_;
@@ -169,24 +193,11 @@ sub _create_constructor {
         my $self = { };
         bless $self, $class;
 
-        no strict 'refs'; ## no critic;
-        my  @isa = @{ "${class}::ISA" };
-
-    OPTION:
+        OPTION:
         while (my ($opt_key, $opt_value) = each %{$options_ref}) {
-            my $has_property = 0;
 
-        ISA:
-            for my $isa ($class, @isa) {
-                if ($PROPERTIES_FOR{$isa} && $PROPERTIES_FOR{$isa}{$opt_key}) {
-                    $has_property = 1;
-                    last ISA;
-                }
-            }
-
-            if ($has_property) {
-                my $set_method = 'set_' . $opt_key;
-                $self->$set_method($opt_value);
+            if ($self->__hasattr__($opt_key)) {
+                $self->__setattr__($opt_key, $opt_value);
             }
         }
 
@@ -226,17 +237,17 @@ sub properties_for_class {
 }
 
 sub _create_destroy_method {
-    my ($CALLPKG) = @_;
+    my ($caller_class) = @_;
 
     return sub {
         my ($self) = @_;
-        my $properties_ref =$PROPERTIES_FOR{$CALLPKG};
-        undef %{$properties_ref};
-        delete $PROPERTIES_FOR{$CALLPKG};
+        #my $properties_ref =$PROPERTIES_FOR{$caller_class};
+        #undef %{$properties_ref};
+        #delete $PROPERTIES_FOR{$caller_class};
 
         no strict   'refs'; ## no critic
         no warnings 'once'; ## no critic
-        if (my $demolish_ref = *{$CALLPKG.'::DEMOLISH'}{CODE}) { ## no critic
+        if (my $demolish_ref = *{$caller_class.'::DEMOLISH'}{CODE}) { ## no critic
             $demolish_ref->($self);
         }
 
@@ -248,170 +259,112 @@ sub property (@) { ## no critic
     my ($property, $isa) = @_;
     return if not $property;
 
-    my $caller = caller;
+    my $caller_class = caller;
     my $set_property = "set_$property";
 
 
     no strict 'refs'; ## no critic
-    if (not *{ $caller . "::$property" }{CODE}) {
-        my $get_accessor = _create_get_accessor($property, $isa);
-        _install_sub_from_coderef($get_accessor => $caller, $property);
+    if (not *{ $caller_class . "::$property" }{CODE}) {
+        my $get_accessor = _create_get_accessor($caller_class, $property, $isa);
+        _install_sub_from_coderef($get_accessor => $caller_class, $property);
     }
 
-    if (not *{ $caller . "::$set_property" }{CODE}) {
-        my $set_accessor = _create_set_accessor($property, $isa);
-        _install_sub_from_coderef($set_accessor => $caller, $set_property);
+    if (not *{ $caller_class . "::$set_property" }{CODE}) {
+        my $set_accessor = _create_set_accessor($caller_class, $property, $isa);
+        _install_sub_from_coderef($set_accessor => $caller_class, $set_property);
     }
 
-    $PROPERTIES_FOR{$caller}->{$property} = 1;
+    $PROPERTIES_FOR{$caller_class}->{$property} = 1;
 
     return;
 }
 
 sub after_property_get (@&) { ## no critic
     my ($property, $func_ref) = @_;
-    my $caller = caller;
+    my $caller_class = caller;
 
-    _install_sub_from_coderef($func_ref => $caller, $property);
+    _install_sub_from_coderef($func_ref => $caller_class, $property);
 
     return;
 }
 
 sub after_property_set (@&) { ## no critic
     my ($property, $func_ref) = @_;
-    my $caller = caller;
+    my $caller_class = caller;
     my $set_property = "set_$property";
 
-    _install_sub_from_coderef($func_ref => $caller, $set_property);
+    _install_sub_from_coderef($func_ref => $caller_class, $set_property);
 
     return;
 }
 
 sub _create_get_accessor {
-    my ($property, $isa) = @_;
+    my ($caller_class, $property, $isa) = @_;
+    my $options = $OPTIONS_FOR{$caller_class};
     my $property_key
         = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
 
-    return sub {
-        my $self = shift;
+    if ($options->{'-chained'}) {
+        return sub {
+            my $self = shift;
+            if (@_) {
+                my $set_property = "set_$property";
+                $self->$set_property($_[0]);
+                return $self;
+            }
+            if (!exists $self->{$property_key}) {
+                $self->{$property_key} =
+                    ref $isa eq 'CODE'
+                    ? $isa->($self)
+                    : $isa;
+            }
+    
+            return $self->{$property_key};
+        };
+    }
+    else {
+        return sub {
+            my $self = shift;
 
-        if (@_) {
-            require Carp;
-            Carp::croak("You tried to set a value with $property(). Did "
-                    ."you mean set_$property() ?");
-        }
+            if (@_) {
+                require Carp;
+                Carp::croak("You tried to set a value with $property(). Did "
+                        ."you mean set_$property() ?");
+            }
 
-        if (!exists $self->{$property_key}) {
-            $self->{$property_key} =
-                ref $isa eq 'CODE'
-                ? $isa->($self)
-                : $isa;
-        }
-
-        return $self->{$property_key};
-    };
+            if (!exists $self->{$property_key}) {
+                $self->{$property_key} =
+                    ref $isa eq 'CODE'
+                    ? $isa->($self)
+                    : $isa;
+            }
+    
+            return $self->{$property_key};
+        };
+    }
 }
 
 sub _create_set_accessor {
-    my ($property) = @_;
+    my ($caller_class, $property) = @_;
+    my $options = $OPTIONS_FOR{$caller_class};
     my $property_key
         = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
 
-    return sub  {
-        my ($self, $value) = @_;
-        $self->{$property_key} = $value;
-        return;
-    }
-}
-
-sub isa_String { ## no critic
-    my ($default_value) = @_;
-
-    return sub {
-        return $default_value
-            if defined $default_value;
-        return;
-    };
-}
-
-sub isa_Int    { ## no critic
-    my ($default_value) = @_;
-
-    return sub {
-        return $default_value
-            if defined $default_value;
-        return;
-    };
-}
-
-sub isa_Array  { ## no critic
-    my @default_values = @_;
-
-    return sub {
-        return scalar @default_values
-            ? \@default_values
-            : [ ];
-    };
-}
-
-sub isa_Hash   { ## no critic
-    my %default_values = @_;
-
-    return sub {
-        return scalar keys %default_values
-            ? \%default_values
-            : { };
-
-        # have to test if there are any entries in the hash
-        # so we return a new anonymous hash if it ain't.
-    };
-}
-
-sub isa_Data   { ## no critic
-    my ($default_value) = @_;
-
-    return sub {
-        return $default_value
-            if defined $default_value;
-        return;
-    };
-}
-
-sub isa_Code (;&;) { ## no critic
-    my $code_ref = shift;
-
-    return sub {
-        return defined $code_ref ? $code_ref : sub { };
-    }
-}
-
-sub isa_File   { ## no critic
-    my $filehandle = shift;
+    if ($options->{'-chained'}) {
     
-    return sub {
-        if (defined $filehandle) {
-            return $filehandle;
-        }
-        else {
-            require FileHandle;
-            return FileHandle->new( );
+        return sub {
+            my ($self, $value ) = @_;
+            $self->{$property_key} = $value;
+            return $self; # <-- this is the chained part.
         }
     }
-}
-
-sub isa_Object { ## no critic
-    my $class = shift;
-    my %opts;
-    if (!scalar @_ % 2) {
-        %opts = @_;
-    }
-    return sub {
-        return if not defined $class;
-        if ($opts{auto}) {
-            return        $class->new();
+    else {
+        return sub  {
+            my ($self, $value) = @_;
+            $self->{$property_key} = $value;
+            return;
         }
-        return;
-    };
+    }
 }
 
 1;
@@ -426,60 +379,75 @@ Class::Dot - Simple and fast properties for Perl 5.
 
 = VERSION
 
-This document describes Class::Dot version v2.0.0 (beta 1).
+This document describes Class::Dot version v1.5.0 (stable).
 
 = SYNOPSIS
 
-    package Animal::Mammal::Carnivorous::Cat;
+    # load standard types (:std) and install default constructor (-new).
+    use Class::Dot qw(-new :std);
 
-    use Class::Dot qw( :std );
+    # Property without type.
+    property 'attribute';
 
-    # A cat's properties, with their default values and type of data.
-    property gender      => isa_String('male');
-    property memory      => isa_Hash;
-    property state       => isa_Hash(instinct => 'hungry');
-    property family      => isa_Array;
-    property dna         => isa_Data;
-    property action      => isa_Data;
-    property colour      => isa_Int(0xfeedface);
-    property fur         => isa_Array('short');
+    # List of property types, doesn't need a default value.
+    property string     => isa_String('default value');
 
-     sub new {
-        my ($class, $gender) = @_;
-        my $self    = { }; # Must be anonymous hash for Class::Dot to work.
-        bless $self, $class;
+    property integer    => isa_Int(256);
 
-        $self->set_gender($gender);
+    property object     => isa_Object('MyApp::Controller');
 
-        warn sprintf('A new cat is born, it is a %s. Weeeeh!',
-            $self->gender
-        );
+    property hashref    => isa_Hash(foo => 1, bar => 2);
+    
+    property arrayref   => isa_Array(qw(the quick brown fox ...));
 
-        return $self;
+    property filehandle => isa_File()
+
+    property code       => isa_Code { return 42 };
+
+    property any_data   => isa_Data;
+
+    # Object type that automaticly creates new instance if it doesn't exist.
+    property model      => isa_Object('MyApp::Model', auto => 1);
+
+    # Initialize something at object construction.
+    sub BUILD {
+        my ($self, $options_ref) = @_;
+
+        warn 'Creating a new object of type ', ref $self;
+
+        return;
     }
 
-    sub run {
-        while (1) {
-            die if $self->state->{dead};
+    # Do something at object destruction.
+    sub DEMOLISH {
+        my ($self) = @_;
+
+        warn 'Instance of class', ref $self, ' is going out of scope.';
+
+        return;
+    }
+
+    # Re-bless instance at instance construction time. (option -rebuild)
+    use Carp;
+    use Class::Dot qw(-new -rebuild :std);
+    use Class::Plugin::Util qw(require_class); # For dynamic loading of classes.
+
+    sub BUILD {
+        my ($self, $options_ref) = @_;
+
+        if (exists $options_ref->{delegate_to}) {
+            my $new_class    = $options_ref->{delegate_to};
+            if (require_class($new_class)) {
+                my $new_instance = $new_class->new();
+                return $new_instance;
+            }
+            else {
+                croak "Could not load class: $new_class"
+            }
         }
+
+        return;
     }
-
-    package main;
-
-    my $albert = new Animal::Mammal::Carnivorous::Cat('male');
-    $albert->memory->{name} = 'Albert';
-    $albert->state->{appetite} = 'insane';
-    $albert->set_fur([qw(short thin shiny)]);
-    $albert->set_action('hunting');
-
-    my $lucy = new Animal::Mammal::Carnivorous::Cat('female');
-    $lucy->memory->{name} = 'Lucy';
-    $lucy->state->{instinct => 'tired'};
-    $lucy->set_fur([qw(fluffy long)]);
-    $lucy->set_action('sleeping');
-
-    push @{ $lucy->family   }, [$albert];
-    push @{ $albert->family }, [$lucy  ];
 
 = DESCRIPTION
 

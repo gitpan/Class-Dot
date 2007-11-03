@@ -1,6 +1,39 @@
 Revision history for Class-Dot
 
-2.0_02 Mon Oct 29 18:08:12 CEST 2007 [asksh@cpan.org]
+1.5.0 Sat  Nov 03 22:05:33 GMT+2 2007 [asksh@cpan.org]
+
+    - 2.0_04 backported as 1.5.0.
+
+2.0_04 Wed Oct 31 16:20:10 GMT+2 2007 [asksh@cpan.org]
+
+    - New feature: You can now do chained accessors by using the -chained use
+      option. Example:
+
+        package Person;
+        use Class::Dot qw(-new -chained :std);
+
+        property name  => isa_String;
+        property email => isa_String;
+        property age   => isa_Int;
+
+        package main;
+
+        my $person = Person->new()
+            ->set_name('Ask')
+            ->set_email('asksh@cpan.org')
+            ->set_age(25);
+
+2.0_03 Tue Oct 30 01:19:37 GMT+2 2007 [asksh@cpan.org]
+
+    - New and more readable SYNOPSIS.
+
+    - A perl.vim syntax highlighting file for vim that also highlights
+      'property' in contrib/vim/syntax. Read contrib/vim/README for more
+      information.
+
+    - Types separated from Class::Dot and moved into Class::Dot::Types.
+
+2.0_02 Mon Oct 29 18:08:12 GMT+2 2007 [asksh@cpan.org]
 
     - License changed to the Modified BSD license,
       however if you ask me nicely I might give you permission to use
@@ -22,7 +55,7 @@ Revision history for Class-Dot
 
 * Changed to BSD license.
 
-2.0_01 Sun Oct 28 17:16:32 CEST 2007 [asksh@cpan.org]
+2.0_01 Sun Oct 28 17:16:32 GMT+2 2007 [asksh@cpan.org]
 
     - Code cleanup.
 
@@ -93,34 +126,34 @@ Revision history for Class-Dot
     (Note: Just be sure not to use property() in a BEGIN block, you have to use
     after_property_* to do that!)
 
-1.0.5  Mon Oct 01 17:13:03 CEST 2007 [asksh@cpan.org]
+1.0.5  Mon Oct 01 17:13:03 GMT+2 2007 [asksh@cpan.org]
     -  isa_File added (a Filehandle).
     -  isa_Code added (a code reference).
     -  Added import option: -rebuild.
        If you return something blessed from your BUILD method and -rebuild
        option is set, it will set $self to that.
 
-1.0.4  Thu Sep 20 16:30:11 CEST 2007 [asksh@cpan.org]
+1.0.4  Thu Sep 20 16:30:11 GMT+2 2007 [asksh@cpan.org]
     -  The created constructor (when using -new import tag option) didn't
        search ISA properly while setting properties using options to new().
     -  isa_Data now sets default value properly.
 
 
-1.0.3  Thu Sep 12 16:55:48 2007 [asksh@cpan.org]
+1.0.3  Thu Sep 12 16:55:48 GMT+2 2007 [asksh@cpan.org]
     -  isa_Int and isa_String set the initial value to 0 and q{} when no
        default value was defined, this resulted in `defined $property` to
        return true.
 
-1.0.2  Tue Sep 12 10:13:04 2007 [asksh@cpan.org]
+1.0.2  Tue Sep 12 10:13:04 GMT+2 2007 [asksh@cpan.org]
     -  Subversion now hosted at googlecode.
        http://class-dot.googlecode.comsearch
 
-1.0.1  Tue Sep 11 24:36:32 2007 [asksh@cpan.org]
+1.0.1  Tue Sep 11 24:36:32 GMT+2 2007 [asksh@cpan.org]
     -  isa_Object no longer automaticly makes new objects if the property is
        not set. If you want that, use: isa_Object('My::Class', auto => 1);
     -  Fixed problems with isa_Object where it would try to make
        a new instance even though no default class was defined.
 
-0.0.1  Sun Sep  9 02:22:58 2007 [asksh@cpan.org]
+0.0.1  Sun Sep  9 02:22:58 GMT+2 2007 [asksh@cpan.org]
        Initial release.
 

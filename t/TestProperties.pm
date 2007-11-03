@@ -1,7 +1,7 @@
 # $Id: TestProperties.pm 27 2007-10-29 17:29:12Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/TestProperties.pm $
+# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/TestProperties.pm $
 # $Revision: 27 $
 # $Date: 2007-10-29 18:29:12 +0100 (Mon, 29 Oct 2007) $
 package TestProperties;
