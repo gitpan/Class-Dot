@@ -5,7 +5,7 @@ use warnings;
 # $Id: properties.t 32 2007-10-31 14:46:57Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/properties.t $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/properties.t $
 # $Revision: 32 $
 # $Date: 2007-10-31 15:46:57 +0100 (Wed, 31 Oct 2007) $
 

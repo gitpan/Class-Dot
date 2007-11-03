@@ -13,7 +13,7 @@ use 5.006000;
 
 use Carp qw(croak);
 
-our $VERSION   = qv('1.5.0');
+our $VERSION   = qv('2.0.0_04');
 our $AUTHORITY = 'cpan:ASKSH';
 
 our @STD_TYPES = qw(
@@ -184,7 +184,7 @@ Class::Dot::Types - Functions returning default values for Class::Dot types.
 
 = VERSION
 
-This document describes Class::Dot version v1.5.0 (stable).
+This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 

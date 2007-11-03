@@ -1,7 +1,7 @@
 # $Id: minimum_version.t 24 2007-10-29 17:15:19Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/minimum_version.t $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/minimum_version.t $
 # $Revision: 24 $
 # $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
 use strict;

@@ -9,7 +9,7 @@ package Perl::Tags::ClassDot;
 use strict;
 use warnings;
 use vars qw(@ISA $VERSION);
-use version; $VERSION = qv('1.5.0');
+use version; $VERSION = qv('2.0.0_04');
 use 5.00600;
 
 @ISA = qw(Perl::Tags::Naive); ## no critic
@@ -81,7 +81,7 @@ Perl::Tags::ClassDot - perltags with support for Class::Dot
 
 = VERSION
 
-This document describes Class::Dot version v1.5.0 (stable).
+This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 

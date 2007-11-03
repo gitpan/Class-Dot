@@ -1,10 +1,6 @@
 Revision history for Class-Dot
 
-1.5.0 Sat  Nov 03 22:05:33 GMT+2 2007 [asksh@cpan.org]
-
-    - 2.0_04 backported as 1.5.0.
-
-2.0_04 Wed Oct 31 16:20:10 GMT+2 2007 [asksh@cpan.org]
+2.0_04 Sat Oct 31 22:46:10 GMT+2 2007 [asksh@cpan.org]
 
     - New feature: You can now do chained accessors by using the -chained use
       option. Example:
@@ -19,9 +15,11 @@ Revision history for Class-Dot
         package main;
 
         my $person = Person->new()
-            ->set_name('Ask')
-            ->set_email('asksh@cpan.org')
-            ->set_age(25);
+            ->name('Ask')
+            ->email('asksh@cpan.org')
+            ->age(25);
+
+    - Module::Install updated to 0.68.
 
 2.0_03 Tue Oct 30 01:19:37 GMT+2 2007 [asksh@cpan.org]
 

@@ -8,7 +8,7 @@ Perl::Tags::ClassDot - perltags with support for Class::Dot
 
 =head1 VERSION
 
-This document describes Class::Dot version v1.5.0 (stable).
+This document describes Class::Dot version v2.0.0 (beta 4).
 
 =head1 SYNOPSIS
 

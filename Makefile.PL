@@ -1,9 +1,9 @@
-# $Id: Makefile.PL 47 2007-11-03 21:11:17Z asksol $
+# $Id: Makefile.PL 49 2007-11-03 21:50:57Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/Makefile.PL $
-# $Revision: 47 $
-# $Date: 2007-11-03 22:11:17 +0100 (Sat, 03 Nov 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/Makefile.PL $
+# $Revision: 49 $
+# $Date: 2007-11-03 22:50:57 +0100 (Sat, 03 Nov 2007) $
 use strict;
 use warnings;
 
@@ -28,7 +28,7 @@ EOF
 
 use inc::Module::Install;
 
-my $THIS_VERSION = '1.5.0';
+my $THIS_VERSION = '2.0.0_04';
 
 name                'Class-Dot';
 author              'Ask Solem <asksh@cpan.org>';

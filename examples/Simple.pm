@@ -1,7 +1,7 @@
 # $Id: Simple.pm 37 2007-11-03 20:08:48Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/examples/Simple.pm $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/examples/Simple.pm $
 # $Revision: 37 $
 # $Date: 2007-11-03 21:08:48 +0100 (Sat, 03 Nov 2007) $
 package Class::Dot::Example::Simple;

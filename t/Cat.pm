@@ -1,7 +1,7 @@
 # $Id: Cat.pm 6 2007-09-13 10:22:19Z asksol $
 # $Source: /opt/CVS/Getopt-LL/t/Cat.pm,v $
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/t/Cat.pm $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/Cat.pm $
 # $Revision: 6 $
 # $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
 package Cat;

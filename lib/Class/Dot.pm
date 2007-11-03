@@ -1,9 +1,9 @@
-# $Id: Dot.pm 47 2007-11-03 21:11:17Z asksol $
+# $Id: Dot.pm 49 2007-11-03 21:50:57Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/branches/stable-1.5.0/lib/Class/Dot.pm $
-# $Revision: 47 $
-# $Date: 2007-11-03 22:11:17 +0100 (Sat, 03 Nov 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/lib/Class/Dot.pm $
+# $Revision: 49 $
+# $Date: 2007-11-03 22:50:57 +0100 (Sat, 03 Nov 2007) $
 package Class::Dot;
 
 use strict;
@@ -14,7 +14,7 @@ use 5.006000;
 use Carp qw(croak);
 use Class::Dot::Types qw(:std);
 
-our $VERSION   = qv('1.5.0');
+our $VERSION   = qv('2.0.0_04');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my @EXPORT_OK = qw(
@@ -154,16 +154,7 @@ sub _create_hasattr {
     # is ProhibitMixedBooleanOperators, so need no critic here.
 	return sub { ## no critic
 		my ($self, $attribute) = @_;
-        my $ref_self = ref $self;
-
-        my $class;
-        if ($ref_self) {
-            $class = $ref_self;
-        }
-        else {
-            $class = $self;
-        }
-
+        my $class = ref $self || $self;
         no strict 'refs'; ## no critic;
         my  @isa = @{ "${class}::ISA" };
         my $has_property = 0;
@@ -379,7 +370,7 @@ Class::Dot - Simple and fast properties for Perl 5.
 
 = VERSION
 
-This document describes Class::Dot version v1.5.0 (stable).
+This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 
