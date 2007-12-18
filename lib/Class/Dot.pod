@@ -12,8 +12,17 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 =head1 SYNOPSIS
 
+     package MyClass;
      # load standard types (:std) and install default constructor (-new).
-     use Class::Dot qw(-new :std);
+ 
+     use Class::Dot qw(-new :std); # Automatically turns on strict and
+                                   # warnings.
+ 
+     # This class inherits from BaseClass.
+     extends 'BaseClass';
+ 
+     # This class has-a AnotherClass.
+     composite another_class => 'AnotherClass'
  
      # Property without type.
      property 'attribute';
@@ -35,7 +44,7 @@ This document describes Class::Dot version v2.0.0 (beta 4).
  
      property any_data   => isa_Data;
  
-     # Object type that automaticly creates new instance if it doesn't exist.
+     # Object type that automatically creates new instance if it doesn't exist.
      property model      => isa_Object('MyApp::Model', auto => 1);
  
      # Initialize something at object construction.
@@ -82,8 +91,21 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 Simple and fast properties for Perl 5.
 
-C<<< Class::Dot >>> also lets you define types for your properties, like Hash,
-String, Int, File, Code, Array and so on.
+=over
+
+=item *
+
+Does not use inheritance.
+
+=item *
+
+Properties are fully overridable (Even when set using C<<< new({}) >>>).
+
+=item *
+
+Lets you define types for your properties, like Hash, String, Int, File, Code, Array and so on.
+
+=back
 
 All the types are populated with sane defaults, so you no longer have to
 write code like this:
@@ -94,53 +116,53 @@ write code like this:
        my $fur    = $self->fur;
  
        $state ||= { }; # <-- you don't have to do this with class dot.
-       $fur   ||= [ ]; # <-- same with this.
+           $fur   ||= [ ]; # <-- same with this.
     }
 
 Class::Dot can also create a default constructor for you if you pass it the
 C<<< -new >>> option on the use line:
 
-    use Class::Dot qw(-new :std);
+     use Class::Dot qw(-new :std);
 
 If you pass a hashref to the constructor, it will use them as values for the
 properties:
 
     my $cat = Animal::Mammal::Carnivorous::Cat->new({
-       gender => 'male',
-       fur    => ['black', 'white', 'short'],
+         gender => 'male',
+         fur    => ['black', 'white', 'short'],
     }
 
 If you want to intialize something at object construction time you can! Just
 define a method named C<<< BUILD >>>. C<<< Class::Dot >>> will pass on the instance and
 all the arguments that was sent to C<<< new >>>.
 
-    sub BUILD {
-       my ($self, $options_ref) = @_;
+     sub BUILD {
+         my ($self, $options_ref) = @_;
  
-       warn 'Someone created a ', ref $self;
+         warn 'Someone created a ', ref $self;
  
-       return;
-    }
+         return;
+     }
 
 The return value of the C<<< BUILD >>> method doesn't mean anything, that is unleass
 you have to C<<< -rebuild >>> option on. When the C<<< -rebuild >>> option is on,
 C<<< Class::Dot >>> uses the return value of BUILD as the new object, so you can
 create a abstract factory or similar:
 
-    use Class::Dot qw(-new -rebuild :std);
+     use Class::Dot qw(-new -rebuild :std);
  
-    sub BUILD {
-       my ($self, $option_ref) = @_;
+     sub BUILD {
+         my ($self, $option_ref) = @_;
  
-       if (exists $options_ref->{delegate_to}) {
-          my $new_class = $options_ref->{delegate_to};
-          my $new_instasnce = $new_class->new($options_ref);
+         if (exists $options_ref->{delegate_to}) {
+             my $new_class = $options_ref->{delegate_to};
+             my $new_instasnce = $new_class->new($options_ref);
  
-          return $new_instance;
-       }
+             return $new_instance;
+         }
  
-       return;
-    }
+         return;
+     }
 
 A big value of using properties is that you can override them at a later point
 to make them support additional functionality, like setting a hardware flag,
@@ -150,51 +172,50 @@ accessors:
     property name => isa_String();
  
     sub name {   # <-- overrides the get accessor
-       my ($self) = @_;
+        my ($self) = @_;
  
-       warn 'Acessing the name property';
+        warn 'Acessing the name property';
  
-       return $self->__getattr__('name');
+        return $self->__getattr__('name');
     }
  
  
-    sub set_name { # <-- overrides the set accessor
-       my ($self, $new_name) = @_;
+     sub set_name { # <-- overrides the set accessor
+         my ($self, $new_name) = @_;
  
-       warn $self->__getattr__('name'), " changed name to $new_name!";
+         warn $self->__getattr__('name'), " changed name to $new_name!";
  
-       $self->__setattr__('name', $new_name);
+         $self->__setattr__('name', $new_name);
  
-       return;
-    }
+         return;
+     }
 
 There is one exception where this won't work, though. That is if you define a
 property in a C<<< BEGIN >>> block. If you do that you have to use the
 C<<< after_property_get() >>> and C<<< after_property_set() >>> functions:
 
-    BEGIN {
-       use Class::Dot qw(-new :std);
-       property name => isa_String();
-    }
+     BEGIN {
+         use Class::Dot qw(-new :std);
+         property name => isa_String();
+     }
  
-    after_property_get name => sub {
-       my ($self) = @_;
+     after_property_get name => sub {
+         my ($self) = @_;
  
-       warn 'Acessing the name property';
+         warn 'Acessing the name property';
  
-       return $self->__getattr__('name');
-    }; # <-- the semicolon is required here!
+         return $self->__getattr__('name');
+     }; # <-- the semicolon is required here!
  
+     after_property_set name => sub {
+         my ($self, $new_name) = @_;
  
-    after_property_set name => sub {
-       my ($self, $new_name) = @_;
+         warn $self->__getattr__('name'), " changed name to $new_name!";
  
-       warn $self->__getattr__('name'), " changed name to $new_name!";
+         $self->__setattr__('name', $new_name);
  
-       $self->__setattr__('name', $new_name);
- 
-       return;
-    }; # <-- the semicolon is required here!
+         return;
+     }; # <-- the semicolon is required here!
 
 You can read more about C<<< Class::Dot >>> in the L<Class::Dot::Manual::Cookbook> and
 L<Class::Dot::Manual::FAQ>. (Not yet written for the 2.0 beta release).
@@ -226,6 +247,82 @@ will create the methods:
      set_bar($value)
 
 with default return values -hello world- and -303-.
+
+=head3 C<<< define_property($property_name, $default_value, $in_class) >>>
+
+Same as C<<< property() >>> except you define which class to install the property
+in.
+
+=head3 C<<< extends(@superclasses) >>>
+
+Set superclasses for the current class. Same as C<<< use base @superclasses >>>.
+
+Example:
+
+     package MyClass::Child;
+     use Class::Dot qw(-new :std);
+     extends 'MyClass';
+
+=head3 C<<< superclasses_for($class, @superclasses) >>>
+
+Set the superclasses for another class.
+
+Example:
+
+     Class::Dot::superclasses_for('ThatClass' => qw(ThatClass::Base));
+
+=head3 C<<< composite($property_name, $composite_class) >>>
+
+Denotes that the current class has a has-a relationship to another
+class. The C<<< $composite_class >>> will be loaded and a property with the name 
+C<<< $property_name >>> will be created. The class will be automatically created
+if there is no instance constructed at object construction time.
+
+     composite another_class => 'Another::Class'
+
+is the same as:
+
+     property another_class => isa_Object('Another::Class', auto => 1);
+
+You can then override this property at another time if you like.
+
+Example defining the instance at build time:
+
+     class MyClass;
+ 
+     composite another_class => 'Another::Class';
+ 
+     sub BUILD {
+         my ($self, $options_ref) = @_;
+ 
+         my $another_class = Another::Class->new();
+         $self->set_another_class( $another_class );
+ 
+         return;
+     }
+ 
+ 
+     sub hello_from_another_class {
+         my ($self) = @_;
+         my $another_class = $self->another_class;
+ 
+         return $another_class->hello();
+     }
+
+=head3 C<<< composites_for($class, $property_name, $composite_class) >>>
+
+Composite the class C<<< $class >>> with C<<< $composite_class >>> as a property
+with the name C<<< $property_name >>>.
+
+=head3 C<<< finalize_class($opt_class) >>>
+
+This will finalize the class C<<< $opt_class >>>. If C<<< $opt_class >>> is not given, the
+current class is used.
+
+You can't add any new properties to the class after finalization.
+So, why would you want to do this? Because it's an optimization.
+All inheritance lookups are cached at the moment of finalization
+and ISA will no longer be traversed at property lookups.
 
 =head3 C<<< after_property_get($attr_name, \&code) >>>
 
@@ -381,6 +478,16 @@ the syntax (C<<< __PACKAGE__->mk_accessors >>> etc).
 =head2 L<Class::InsideOut>
 
 For Inside-Out objects. Does not have types.
+
+=head1 CODE COVERAGE
+
+---------------------------- ------ ------ ------ ------ ------ ------ ------
+File                           stmt   bran   cond    sub    pod   time  total
+---------------------------- ------ ------ ------ ------ ------ ------ ------
+libE<sol>ClassE<sol>Dot.pm               99.0   98.8   64.3  100.0  100.0   79.0   98.2
+libE<sol>ClassE<sol>DotE<sol>Types.pm         97.0   97.2  100.0  100.0  100.0   21.0   97.8
+Total                          98.4   98.4   70.6  100.0  100.0  100.0   98.1
+---------------------------- ------ ------ ------ ------ ------ ------ ------
 
 =head1 AUTHOR
 

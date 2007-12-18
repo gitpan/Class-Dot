@@ -1,11 +1,12 @@
-# $Id: Makefile.PL 49 2007-11-03 21:50:57Z asksol $
+# $Id: Makefile.PL 57 2007-12-18 13:19:53Z asksol $
 # $Source$
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/trunk/Makefile.PL $
-# $Revision: 49 $
-# $Date: 2007-11-03 22:50:57 +0100 (Sat, 03 Nov 2007) $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 use strict;
 use warnings;
+require 5.00600;
 
 use English qw(-no_match_vars);
 eval 'require Class::Dot';
@@ -28,7 +29,7 @@ EOF
 
 use inc::Module::Install;
 
-my $THIS_VERSION = '2.0.0_04';
+my $THIS_VERSION = '2.0.0_06';
 
 name                'Class-Dot';
 author              'Ask Solem <asksh@cpan.org>';
@@ -36,10 +37,13 @@ version             $THIS_VERSION;
 license             'bsd';
 all_from            'lib/Class/Dot.pm';
 
-requires            'version'          => 0;
+requires            'version'             => 0;
+requires            'Class::Plugin::Util' => 0.007;
 
+recommends          'Sub::Name'        => 0;
 recommends          'Test::Exception'  => 0.25;
 recommends          'IO::Capture'      => 0;
+
 
 build_requires      'Test::Simple'     => 0.42;
 build_requires      'Scalar::Util'     => 1.14;

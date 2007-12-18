@@ -1,9 +1,9 @@
-# $Id: minimum_version.t 24 2007-10-29 17:15:19Z asksol $
+# $Id: minimum_version.t 52 2007-11-04 16:55:12Z asksol $
 # $Source$
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/minimum_version.t $
-# $Revision: 24 $
-# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
+# $Revision: 52 $
+# $Date: 2007-11-04 17:55:12 +0100 (Sun, 04 Nov 2007) $
 use strict;
 use warnings;
 use File::Spec;
@@ -28,7 +28,7 @@ if ( $EVAL_ERROR ) {
 
 
 Test__MinimumVersion->import;
-all_minimum_version_ok('5.006000');
+all_minimum_version_ok('5.00600');
 
 
 # Local Variables:

@@ -1,9 +1,9 @@
-# $Id: cat.t 24 2007-10-29 17:15:19Z asksol $
+# $Id: cat.t 57 2007-12-18 13:19:53Z asksol $
 # $Source$
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/cat.t $
-# $Revision: 24 $
-# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 use strict;
 use warnings;
 
@@ -15,7 +15,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 61;
+our $THIS_TEST_HAS_TESTS = 71;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -32,11 +32,14 @@ like( $EVAL_ERROR, qr/$wanted_err_msg/, 'only one export class allowed');
 my $properties_for_cat
     = Class::Dot->properties_for_class('Cat');
 
-my %should_have = map { $_ => 1 } qw(
+my @should_have = qw(
     gender memory fur action dna brain colour state family
 );
 
-is_deeply($properties_for_cat, \%should_have);
+for my $must_have (@should_have) {
+    ok( $properties_for_cat->{$must_have}, "defined property: $must_have" );
+}
+    
 
 ok(ref $properties_for_cat eq 'HASH', 'properties_for_class(Cat)');
 ok(scalar keys %{ $properties_for_cat }, 'properties_for_class(Cat)');
@@ -98,6 +101,12 @@ push @{ $albert->family }, [$lucy  ];
 is_deeply( $lucy->family,   [[$albert]], 'cat->family');
 is_deeply( $albert->family, [[$lucy  ]], 'cat->family');
 
+# Test DEMOLISH. Should be last.
+ok(!$Cat::HAS_BEEN_DESTRUCTED, 'not yet destroyed');
+$lucy->DESTROY();
+ok($Cat::HAS_BEEN_DESTRUCTED, 'DEMOLISH called at DESTROY');
+
+__END__
 
 # Local Variables:
 #   mode: cperl

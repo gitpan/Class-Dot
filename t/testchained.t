@@ -1,9 +1,9 @@
-# $Id: properties.t 28 2007-10-29 17:35:27Z asksol $
+# $Id: testchained.t 57 2007-12-18 13:19:53Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/properties.t $
-# $Revision: 28 $
-# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/testchained.t $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 use strict;
 use warnings;
 
@@ -15,7 +15,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 12;
+our $THIS_TEST_HAS_TESTS = 15;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -35,6 +35,10 @@ is( $chained->name, 'Ask Solem', 'name() chained');
 is( $chained->email, 'askh@opera.com', 'email() chained');
 is( $chained->address, 'Waldemar Tranes gt.', 'address() chained');
 is( $chained->birthdate_year, 1982, 'birthdate_year() chained');
+
+is( $chained->with_default, 'hello world!', 'with default var');
+is( $chained->reg, 'hello universe!', 'with no type');
+is( $chained->reglazy, 'hello lazy!', 'with lazy type');
 
 $chained = TestChained->new->name('Ask Solem')
     ->email('askh@opera.com')

@@ -1,9 +1,9 @@
-# $Id: properties.t 28 2007-10-29 17:35:27Z asksol $
+# $Id: testcomplete.t 57 2007-12-18 13:19:53Z asksol $
 # $Source$
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/t/properties.t $
-# $Revision: 28 $
-# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/testcomplete.t $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 use strict;
 use warnings;
 
@@ -15,7 +15,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 17;
+our $THIS_TEST_HAS_TESTS = 18;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -86,6 +86,12 @@ is( $type2_no2->in_type2, 'this property belongs to Type2 instance 2',
 );
 
 ok(! $type2_no2->can('in_type1'), 'type2 no2 cannot in_type1');
+
+ok(! Class::Dot::superclasses_for(
+    'TestComplete::Type2' => 'TestComplete::Base',
+    ),
+    'Should skip loading of already loaded superclass',
+);
 
 # Local Variables:
 #   mode: cperl

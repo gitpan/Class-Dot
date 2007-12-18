@@ -7,6 +7,7 @@ devel/build_wikidoc.pl
 devel/curversion
 devel/grepversion.sh
 devel/incrementversion.sh
+devel/testcover
 examples/Cat.pm
 examples/Simple.pm
 inc/Module/AutoInstall.pm
@@ -38,8 +39,10 @@ t/00-Kwalitee.t
 t/00-YAML-META_valid.t
 t/Cat.pm
 t/cat.t
+t/Composite.pm
 t/Mammal.pm
 t/minimum_version.t
+t/on_devel_hide.t.disabled
 t/perlcritic.t
 t/perlcriticrc
 t/pod-coverage.t
@@ -55,3 +58,4 @@ t/TestComplete/Base.pm
 t/TestComplete/Type1.pm
 t/TestComplete/Type2.pm
 t/TestProperties.pm
+t/when_sub_name.t.disabled

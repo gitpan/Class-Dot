@@ -1,9 +1,9 @@
-# $Id: Cat.pm 6 2007-09-13 10:22:19Z asksol $
+# $Id: Cat.pm 57 2007-12-18 13:19:53Z asksol $
 # $Source: /opt/CVS/Getopt-LL/t/Cat.pm,v $
 # $Author: asksol $
 # $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/Cat.pm $
-# $Revision: 6 $
-# $Date: 2007-09-13 12:22:19 +0200 (Thu, 13 Sep 2007) $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 package Cat;
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 use Class::Dot qw( -new :std );
-use base 'Mammal';
+extends 'Mammal';
 {
 
     # A cat's properties, with their default values and type of data.
@@ -43,7 +43,9 @@ use base 'Mammal';
         return;
     }
 
+    our $HAS_BEEN_DESTRUCTED = 0;
     sub DEMOLISH {
+        $HAS_BEEN_DESTRUCTED = 1;
        return; 
     }
 }

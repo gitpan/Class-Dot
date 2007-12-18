@@ -1,5 +1,85 @@
 Revision history for Class-Dot
 
+2.0_06 Mon Dec 17 14:35:44 GMT+2 2007 [asksh@cpan.org]
+    
+    - Test coverage is now 98%
+
+    - strict and warnings are now automatically imported when you load
+      Class::Dot. This could potentially break code, but you did use string
+      and warnings, didn't you? (This feature was inspired by Moose).
+
+    - Names for anonymous subroutines are properly set if Sub::Name is
+      installed. This is very useful for debugging purposes.
+
+    - Added extends() function. It works like {use base}, but doesn't have all
+      the fields related buisness inside.
+
+    - Added composite() function. Let's you use composition to define a has-a
+      relationship to other classes. The composite class is automatically
+      loaded and a property is made.
+
+      Example:
+
+        composite another_class => 'AnotherClass';
+
+      is the same as:
+
+        property another_class => isa_Object('AnotherClass', auto => 1);
+    
+
+    - Types are now objects and you can get their type and default value by
+      doing:
+
+        package MyClass;
+
+        use Class::Dot qw(-new :std);
+
+        property name => isa_String("hello world!");
+
+        sub print_name_meta {
+            my ($self) = @_;
+
+            my $name_type = $self->__meta__('name');
+
+            # Prints: String
+            print "Name type: ", $name_type->type(), "\n";
+
+            # Prints: hello world!
+            print "Name defval: ", $name_type->default_value(), "\n";
+
+            return;
+        }
+
+      
+
+2.0_05 Mon Dec 10 23:49:46 GMT+2 2007 [asksh@cpan.org]
+
+    - The set accessors for properties named _property will no longer be
+     set__property, but will have the more intuitive name _set_property.
+     The same goes for __property and __set_property (which before got the
+     name set___property).
+
+    - You can now finalize your class to speed it up. After finalization
+    the inheritance tree is pre-cached, and ISA will no longer be traversed.
+    The backside is that you can't add any new properties after finalization.
+
+    Examples:
+
+        # To finalize any class from anywhere.
+        Class::Dot::finalize_class($class_name);
+
+        # To finalize the class of an instance.
+        $instance->__finalize__
+
+        # The see if a class is finalized or not.
+        if ($instance->__is_finalized__) {
+            print ref $instance, " is finalized";
+        }
+
+    You would probably want to live without finalization.
+    If you really need this, be really sure you need it by profiling
+    your code and not by guessing.
+
 2.0_04 Sat Oct 31 22:46:10 GMT+2 2007 [asksh@cpan.org]
 
     - New feature: You can now do chained accessors by using the -chained use

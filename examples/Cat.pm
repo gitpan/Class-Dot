@@ -1,9 +1,9 @@
-# $Id$
+# $Id: Cat.pm 50 2007-11-03 21:59:03Z asksol $
 # $Source$
-# $Author$
-# $HeadURL$
-# $Revision$
-# $Date$
+# $Author: asksol $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/examples/Cat.pm $
+# $Revision: 50 $
+# $Date: 2007-11-03 22:59:03 +0100 (Sat, 03 Nov 2007) $
 package Animal::Mammal::Carnivorous::Cat;
 
 use Class::Dot qw( :std );

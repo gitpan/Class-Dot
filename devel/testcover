@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cover -delete
+env PERL5OPT="-MDevel::Cover" make test
+cover

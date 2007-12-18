@@ -1,9 +1,9 @@
-# $Id: Dot.pm 28 2007-10-29 17:35:27Z asksol $
+# $Id: Types.pm 57 2007-12-18 13:19:53Z asksol $
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
 # $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/class-dot/lib/Class/Dot.pm $
-# $Revision: 28 $
-# $Date: 2007-10-29 18:35:27 +0100 (Mon, 29 Oct 2007) $
+# $HeadURL: https://class-dot.googlecode.com/svn/trunk/lib/Class/Dot/Types.pm $
+# $Revision: 57 $
+# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
 package Class::Dot::Types;
 
 use strict;
@@ -11,9 +11,24 @@ use warnings;
 use version qw(qv);
 use 5.006000;
 
-use Carp qw(croak);
+use Carp            qw(croak);
+use Params::Util    qw(_ARRAYLIKE _HASHLIKE);
+use English         qw(-no_match_vars);
 
-our $VERSION   = qv('2.0.0_04');
+BEGIN {
+    eval 'require Sub::Name'; ## no critic
+    if ($EVAL_ERROR) {
+        *subname = sub {
+            my ($sub_name, $sub_coderef) = @_;
+            return $sub_coderef;
+        };
+    }
+    else {
+        Sub::Name->import('subname');
+    }
+}
+
+our $VERSION   = qv('2.0.0_06');
 our $AUTHORITY = 'cpan:ASKSH';
 
 our @STD_TYPES = qw(
@@ -37,6 +52,10 @@ our %__TYPEDICT__ = (
    'Object'    => \&isa_Object,
    'String'    => \&isa_String,
 );
+
+my $TYPE_BASE_CLASS = 'DotX';
+
+my $THIS_PKG = __PACKAGE__;
 
 sub import { ## no critic
     my $this_class   = shift;
@@ -81,41 +100,103 @@ sub _install_sub_from_class {
     return;
 }
 
+sub _subclass_name {
+    my ($parent_class, $subclass_name) = @_;
+    return join q{::}, $parent_class, $subclass_name;
+}
+
+sub _create_type_instance {
+    my ($type, $isa) = @_;
+
+    my $full_class_name = _subclass_name($TYPE_BASE_CLASS, $type);
+
+    _create_class($full_class_name, {
+            type            => (subname "${full_class_name}::type" => sub {
+                    return $type;
+            }),
+            default_value   =>
+                (subname "${full_class_name}::default_value" => sub {
+                    my ($self)  = @_;
+                    my $sub_ref = ${ $self };
+                    return $sub_ref->();
+            }),
+        },
+        [ $TYPE_BASE_CLASS ],
+    );
+
+    return bless \$isa, $full_class_name;
+}
+
+my $created_classes = { };
+sub _create_class {
+    my ($class_name, $methods_ref, $append_isa_ref, $version) = @_;
+    return if exists $created_classes->{$class_name};
+
+    $version = defined $version ? $version
+        : 1.0;
+
+    no strict 'refs';       ## no critic
+    no warnings 'redefine'; ## no critic
+
+    if (_ARRAYLIKE($append_isa_ref)) {
+        my $isa_ref = \@{ "${class_name}::ISA" };
+        push @{ $isa_ref }, @{ $append_isa_ref };
+    }
+
+    if (_HASHLIKE($methods_ref)) {
+        while (my ($method_name, $method_code) = each %{ $methods_ref }) {
+            *{ "${class_name}::$method_name" } = $method_code;
+        }
+    }
+
+    ${ "${class_name}::VERSION" } = $version;
+
+    $created_classes->{$class_name} = 1;
+
+    return;
+}
+
 
 sub isa_String { ## no critic
     my ($default_value) = @_;
 
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_String_defval" => sub {
         return $default_value
             if defined $default_value;
         return;
     };
+
+    return _create_type_instance('String', $generator);
 }
 
 sub isa_Int    { ## no critic
     my ($default_value) = @_;
 
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_Int_defval" => sub {
         return $default_value
             if defined $default_value;
         return;
     };
+
+    return _create_type_instance('Int', $generator);
 }
 
 sub isa_Array  { ## no critic
     my @default_values = @_;
 
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_Array_defval" => sub {
         return scalar @default_values
             ? \@default_values
             : [ ];
     };
+
+    return _create_type_instance('Array', $generator);
 }
 
 sub isa_Hash   { ## no critic
     my %default_values = @_;
 
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_Hash_defval" => sub {
         return scalar keys %default_values
             ? \%default_values
             : { };
@@ -123,30 +204,37 @@ sub isa_Hash   { ## no critic
         # have to test if there are any entries in the hash
         # so we return a new anonymous hash if it ain't.
     };
+
+    return _create_type_instance('Hash', $generator);
 }
 
 sub isa_Data   { ## no critic
     my ($default_value) = @_;
 
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_Data_defval" => sub {
         return $default_value
             if defined $default_value;
         return;
     };
+
+    return _create_type_instance('Data', $generator);
 }
 
 sub isa_Code (;&;) { ## no critic
     my $code_ref = shift;
 
-    return sub {
-        return defined $code_ref ? $code_ref : sub { };
-    }
+    my $generator = subname "${THIS_PKG}::isa_Code_defval" => sub {
+        return defined $code_ref ? $code_ref
+            : subname 'lambda-non' => sub { };
+    };
+
+    return _create_type_instance('Code', $generator);
 }
 
 sub isa_File   { ## no critic
     my $filehandle = shift;
     
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_File_defval" => sub {
         if (defined $filehandle) {
             return $filehandle;
         }
@@ -154,7 +242,9 @@ sub isa_File   { ## no critic
             require FileHandle;
             return FileHandle->new( );
         }
-    }
+    };
+
+    return _create_type_instance('File', $generator);
 }
 
 sub isa_Object { ## no critic
@@ -163,13 +253,15 @@ sub isa_Object { ## no critic
     if (!scalar @_ % 2) {
         %opts = @_;
     }
-    return sub {
+    my $generator = subname "${THIS_PKG}::isa_Object_defval" => sub {
         return if not defined $class;
         if ($opts{auto}) {
             return        $class->new();
         }
         return;
     };
+
+    return _create_type_instance('Object', $generator);
 }
 
 1;
