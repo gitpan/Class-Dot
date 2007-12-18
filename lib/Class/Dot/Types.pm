@@ -1,9 +1,9 @@
-# $Id: Types.pm 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/lib/Class/Dot/Types.pm $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 package Class::Dot::Types;
 
 use strict;
@@ -28,7 +28,7 @@ BEGIN {
     }
 }
 
-our $VERSION   = qv('2.0.0_06');
+our $VERSION   = qv('2.0.0_07');
 our $AUTHORITY = 'cpan:ASKSH';
 
 our @STD_TYPES = qw(

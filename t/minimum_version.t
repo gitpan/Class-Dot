@@ -1,9 +1,9 @@
-# $Id: minimum_version.t 52 2007-11-04 16:55:12Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/minimum_version.t $
-# $Revision: 52 $
-# $Date: 2007-11-04 17:55:12 +0100 (Sun, 04 Nov 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 use strict;
 use warnings;
 use File::Spec;

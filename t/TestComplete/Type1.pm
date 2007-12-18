@@ -1,9 +1,9 @@
-# $Id: Type1.pm 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/TestComplete/Type1.pm $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 package TestComplete::Type1;
 use Class::Dot qw(-new :std);
 extends 'TestComplete::Base';

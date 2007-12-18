@@ -1,10 +1,10 @@
 #!perl -T
-# $Id: pod-coverage.t 24 2007-10-29 17:15:19Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/pod-coverage.t $
-# $Revision: 24 $
-# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 
 use Test::More;
 
@@ -19,7 +19,8 @@ if ( not $ENV{CLASS_DOT_AUTHOR} ) {
 
 eval "use Test::Pod::Coverage 1.04";
 plan skip_all => "Test::Pod::Coverage 1.04 required for testing POD coverage" if $@;
-all_pod_coverage_ok();
+my $trustme = { trustme => [qr/^(BUILD|subname|DEMOLISH)$/] };
+all_pod_coverage_ok($trustme);
 
 # Local Variables:
 #   mode: cperl

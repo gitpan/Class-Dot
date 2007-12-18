@@ -1,9 +1,9 @@
-# $Id: Dot.pm 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source: /opt/CVS/Getopt-LL/lib/Class/Dot.pm,v $
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/lib/Class/Dot.pm $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 package Class::Dot;
 
 use strict;
@@ -30,7 +30,7 @@ BEGIN {
     }
 }
 
-our $VERSION   = qv('2.0.0_06');
+our $VERSION   = qv('2.0.0_07');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my @EXPORT_OK = qw(
@@ -212,12 +212,17 @@ sub finalize_class {
     $ISA_CACHE_FOR{$class} ||= { };
     my $this_isa_cache = $ISA_CACHE_FOR{$class};
 
-    ISA:
-    for my $isa ($class, @isa) {
-        PROPERTY:
-        for my $property (keys %{ $PROPERTIES_FOR{$isa} }) {
-            $this_isa_cache->{$property} = 1;
+    if (scalar @isa) {
+        ISA:
+        for my $isa ($class, @isa) {
+            PROPERTY:
+            for my $property (keys %{ $PROPERTIES_FOR{$isa} }) {
+                $this_isa_cache->{$property} = 1;
+            }
         }
+    }
+    else {
+        $this_isa_cache = {%{ $PROPERTIES_FOR{$class} }};
     }
 
     $IS_FINALIZED{$class} = 1;
@@ -242,14 +247,19 @@ sub _create_hasattr {
         my  @isa = @{ "${class}::ISA" };
         my $has_property = 0;
 
-        ISA:
-        for my $isa ($class, @isa) {
-            if ($PROPERTIES_FOR{$isa} && exists $PROPERTIES_FOR{$isa}{$attribute}) {
-                $has_property = 1;
-                last ISA;
+        if (scalar @isa) {
+            ISA:
+            for my $isa ($class, @isa) {
+                if ($PROPERTIES_FOR{$isa} && exists $PROPERTIES_FOR{$isa}{$attribute}) {
+                    $has_property = 1;
+                    last ISA;
+                }
             }
         }
-
+        else {
+            $has_property = exists $PROPERTIES_FOR{$class}{$attribute};
+        }
+            
 		return if not $has_property;
 		return $ATTR_EXISTS;
 	}
@@ -306,6 +316,11 @@ sub properties_for_class {
         @isa_for_class = @{ $class . '::ISA' };
     }
 
+    # Optimization if the class does not use inheritance.
+    if (! scalar @isa_for_class) {
+        return $PROPERTIES_FOR{$class};
+    }
+
     for my $parent ($class, @isa_for_class) {
         while (my ($prop, $instance) = each %{ $PROPERTIES_FOR{$parent} }) {
             $class_properties{$prop} = $instance;
@@ -349,8 +364,6 @@ sub composite (@;) { ## no critic
     my ($name, $class) = @_;
     my $caller_class   = caller 0;
 
-    print "Composition $caller_class\n";
-
     return composites_for($caller_class, $name, $class);
 };
 
@@ -360,8 +373,6 @@ sub composites_for {
     if (!require_class($composite)) {
         croak "Couldn't load composite class '$composite'\n";
     }
-
-    print "Adding composite [$composite] to [$class] as [$name]\n";
 
     return define_property($name, isa_Object($composite, auto => 1) => $class);
 }

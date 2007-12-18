@@ -1,9 +1,9 @@
-# $Id: testchained.t 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/testchained.t $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 use strict;
 use warnings;
 

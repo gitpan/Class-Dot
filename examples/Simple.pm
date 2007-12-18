@@ -1,9 +1,9 @@
-# $Id: Simple.pm 37 2007-11-03 20:08:48Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/examples/Simple.pm $
-# $Revision: 37 $
-# $Date: 2007-11-03 21:08:48 +0100 (Sat, 03 Nov 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 package Class::Dot::Example::Simple;
 
 use Class::Dot 2.0 qw(-new :std);

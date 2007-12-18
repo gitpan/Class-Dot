@@ -1,9 +1,9 @@
-# $Id: 00-Kwalitee.t 24 2007-10-29 17:15:19Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/00-Kwalitee.t $
-# $Revision: 24 $
-# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 use Test::More;
 
 if ($ENV{TEST_COVERAGE}) {

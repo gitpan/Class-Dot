@@ -1,9 +1,9 @@
-# $Id: pod-spell.t 24 2007-10-29 17:15:19Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/pod-spell.t $
-# $Revision: 24 $
-# $Date: 2007-10-29 18:15:19 +0100 (Mon, 29 Oct 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 use strict;
 use warnings;
 use Test::More;

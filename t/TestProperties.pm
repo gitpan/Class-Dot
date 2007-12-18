@@ -1,9 +1,9 @@
-# $Id: TestProperties.pm 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/t/TestProperties.pm $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 package TestProperties;
 
 use strict;

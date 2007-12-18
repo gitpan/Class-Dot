@@ -1,9 +1,9 @@
-# $Id: Makefile.PL 57 2007-12-18 13:19:53Z asksol $
+# $Id$
 # $Source$
-# $Author: asksol $
-# $HeadURL: https://class-dot.googlecode.com/svn/trunk/Makefile.PL $
-# $Revision: 57 $
-# $Date: 2007-12-18 14:19:53 +0100 (Tue, 18 Dec 2007) $
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
 use strict;
 use warnings;
 require 5.00600;
@@ -29,7 +29,7 @@ EOF
 
 use inc::Module::Install;
 
-my $THIS_VERSION = '2.0.0_06';
+my $THIS_VERSION = '2.0.0_07';
 
 name                'Class-Dot';
 author              'Ask Solem <asksh@cpan.org>';
@@ -39,6 +39,7 @@ all_from            'lib/Class/Dot.pm';
 
 requires            'version'             => 0;
 requires            'Class::Plugin::Util' => 0.007;
+requires            'Params::Util'        => 0;
 
 recommends          'Sub::Name'        => 0;
 recommends          'Test::Exception'  => 0.25;
