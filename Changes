@@ -1,5 +1,33 @@
 Revision history for Class-Dot
 
+2.0_08 Thu Dec 20 12:44:43 GMT+2 2007 [asksh@cpan.org]
+
+    - There was a bug in the ISA traversal. It would not fetch recursive
+      inheritance. This is now fixed.
+
+    - Class::Dot now uses mro::get_linear_isa if available. (mro was
+      introduced in perl 5.9.5 and is included with the recent 5.10.0 release)
+
+    - Class::Dot now tries to load Class::Dot::XS which is a speed-up module
+      in the making. It will be uploaded to CPAN when it's finished.
+
+2.0_08 Wed Dec 19 13:49:14 GMT+2 2007 [asksh@cpan.org]
+    - Reported by: srezic@cpan.org Subject: FAIL Class-Dot-2.0.0_07 MSWin32-x86-multi-thread 5.1
+    Fixlog:
+    Fixed problem on Win32 where extra zeros where padded to the version numbers:
+
+    t/properties..............
+    %   Failed test 'default class version is 1'
+    %   at t/properties.t line 315.
+    %          got: '1.000'
+    %     expected: '1'
+
+    %   Failed test 'create class without methods'
+    %   at t/properties.t line 329.
+    %          got: '2.480'
+    %     expected: '2.48'
+    % Looks like you failed 2 tests of 115.
+
 2.0_07 Mon Dec 17 18:40:04 GMT+2 2007 [asksh@cpan.org]
     - Added an optimization to the property inheritance traveral that is in
       effect if the class does not use inheritance.

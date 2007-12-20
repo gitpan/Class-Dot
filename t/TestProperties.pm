@@ -34,6 +34,12 @@ property __private      => isa_String;
 property _private       => isa_String;
 property __private__    => isa_String;
 
+property regex_empty    => isa_Regex;
+property regex_def      => isa_Regex(qr{quick\s+brown\s+fox}xms);
+
+property bool           => isa_Bool(0xfffd); #<< default value of 0xffff should
+                                             #   become 1
+
 composite compoze => 'Composite';
 
 property reglazy        => sub { return "hello lazy!" };

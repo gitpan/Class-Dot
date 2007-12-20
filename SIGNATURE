@@ -14,20 +14,25 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 fbf089fddd280c2f1422c9b03a63c067a6734531 Changes
-SHA1 6a3bdb72abd739bc7ceedbac55464c204acb52cc MANIFEST
-SHA1 22b12c28b658d9d315f577da559c8947ff0ecc6d META.yml
-SHA1 c0080c0647ba8db0b63712e60e51887e2aecbc90 Makefile.PL
+SHA1 72ec3bb0a381c935a757f08ee7fcaee8f7a610d7 COPYING
+SHA1 b50e1dd9df5adf19d561ccccf7b07f47f78ff33b Changes
+SHA1 cff77aa025abe2b279f34423e66607cfef6d2fef MANIFEST
+SHA1 dc64ea3b38fc44ced39bee628e5752934096d354 META.yml
+SHA1 94ba0a99a0d59a081420aa8ba5cf142cc94021cf Makefile.PL
 SHA1 09e43c85db8337afe217e5e80d0e5578665038eb README
+SHA1 672c9db131b577f8c60b7f7e6e04b88d9d5e6186 TODO
+SHA1 60b70ecd663294f46f55ebe009f28773db44ba4c Typemap.PL
 SHA1 493d550ffc8065cc3a141bcb10fb7bf681ae3313 contrib/dotperltags
 SHA1 a1e7f39f0143f18fc57c6d85d49c31bdd9840c70 contrib/vim/README
 SHA1 ad71b01905836ef612467b0d29bcc6683bca8c36 contrib/vim/syntax/perl.vim
 SHA1 82f422c11a6fc9dbeaf46eca7d3400bb2ac0c522 contrib/vim/taglist.vim
+SHA1 12d28c7c1c58c9debf0c4fa077b6af2949a41933 devel/Generator/Typemap.pm
 SHA1 021259440b1347682334517536450bf5c947d453 devel/build_wikidoc.pl
 SHA1 30a8d488c574d81f3f931eea5c7e0f01dda79842 devel/curversion
 SHA1 bc0316b51ebe88f527eec920c41fd1e65facc88e devel/grepversion.sh
 SHA1 d161ba99a55ec8bdda464b31add26e58bc375428 devel/incrementversion.sh
 SHA1 55c930a121e9b25c483360a0dc131ba334859c7b devel/testcover
+SHA1 69a0652d0cfb6d54fddf53439b8ff56ad313a2ab devel/trav.pl
 SHA1 0285ad6bcaf85818e5e6cd27832b0afa9531edee examples/Cat.pm
 SHA1 425a1c674678c452b1779133751d660d41811cd3 examples/Simple.pm
 SHA1 603bb9de29fb8cba7f13409c546750972eff645d inc/Module/AutoInstall.pm
@@ -41,40 +46,53 @@ SHA1 54fcbed19232ec959bb17cfb4410599afc7f0779 inc/Module/Install/Makefile.pm
 SHA1 7d3be9b158e37b2b2c22084740099955623b1d56 inc/Module/Install/Metadata.pm
 SHA1 0a8b66180229ba2f9deaea1fedd0aacf7a7ace6b inc/Module/Install/Win32.pm
 SHA1 d3352eb33fe43a5f3ead513f645224fe34d73bc9 inc/Module/Install/WriteAll.pm
-SHA1 207a58d1ba311ed8059155a9e036f777754d8969 lib/Class/Dot.pm
-SHA1 b541c90906cf6550a047398fa89633fd951e8fd0 lib/Class/Dot.pod
-SHA1 d47537eb56e1f02b285d6147080a54c22dce4842 lib/Class/Dot/Types.pm
-SHA1 68483c216288b5e6e62a029303a8e5a5d2acc9b7 lib/Perl/Tags/ClassDot.pm
-SHA1 149659d84d281c682444a18f23a8e811137d3b20 lib/Perl/Tags/ClassDot/Tag/Property.pm
+SHA1 fb27a9a701a5311d4323406f3d21b708e8494ae3 lib/Class/Dot.pm
+SHA1 4729e8388525be6785c30ffc1c8d2484c5c9cb35 lib/Class/Dot.pod
+SHA1 67681cf1d9e37969c56dd2054e548bfeb4a4dafc lib/Class/Dot/Devel/Sub/Name.pm
+SHA1 51498e7a7950c13ce0340c6d719af9b68a05bf70 lib/Class/Dot/Devel/Sub/Name.pod
+SHA1 6e320da57c137fb67ac14018b7e289a7f6586f70 lib/Class/Dot/Meta/Attribute.pm
+SHA1 51498e7a7950c13ce0340c6d719af9b68a05bf70 lib/Class/Dot/Meta/Attribute.pod
+SHA1 0a1234cdb049b946b8aabb978d86d554823a39fc lib/Class/Dot/Meta/Method.pm
+SHA1 51498e7a7950c13ce0340c6d719af9b68a05bf70 lib/Class/Dot/Meta/Method.pod
+SHA1 0bfff919402af1e2036ad6421946de438b9469da lib/Class/Dot/Types.pm
+SHA1 b295730db8b879fabc5cef5c36b373b33dcbe7fb lib/Class/Dot/Types.pod
+SHA1 d5b8130469a363423d7edc51059504c26e2d8d1c lib/DotX.pm
+SHA1 51498e7a7950c13ce0340c6d719af9b68a05bf70 lib/DotX.pod
+SHA1 7c0b28bbee32d2f5cb8b1ac98dbbf0668853191f lib/Perl/Tags/ClassDot.pm
+SHA1 33c777f9426c9566fe5a829c42f4daa3cc23a1e3 lib/Perl/Tags/ClassDot.pod
+SHA1 290a2aab27ea1c287af7b03ff52fc4d60a334d60 lib/Perl/Tags/ClassDot/Tag/Property.pm
+SHA1 a835269ad5cf644883b78f28e43f1d56bd250996 lib/Perl/Tags/ClassDot/Tag/Property.pod
 SHA1 16b968332d807eb4482a38a64775975f287f97f3 t/.01-basic.t.swp
-SHA1 6944eecdc4a1f51a808ece0d80845c1dbc081e15 t/00-Kwalitee.t
-SHA1 e71930061e4fc3170c37a07686641ec58a9c28c7 t/00-YAML-META_valid.t
-SHA1 bb57257f8f74dacf5d1715c04d156a242bc3e92f t/Cat.pm
+SHA1 ef1aeb0a4d726334ca022097eb54fb64fa2e9fee t/Cat.pm
 SHA1 9e3bc977dfac1237dd80f2baff93c6c1de171967 t/Composite.pm
 SHA1 06e61b72dd8401f9255986eca4d075d7f0859282 t/Mammal.pm
 SHA1 be8ba176185fc1b0d64f8deb473092c05b66850d t/TestChained.pm
 SHA1 d86c0db5ddf2a1d6ce090007d848233995b0590e t/TestComplete.pm
+SHA1 ef1ae6522ebcc6404c053b9e53a379ee32aac1db t/TestComplete/AlternateBase.pm
 SHA1 5c58a4ddb82faddbefbb033483a64f037495575c t/TestComplete/Base.pm
-SHA1 4b8a9f3120337652463e8b3b438dc059c41b5810 t/TestComplete/Type1.pm
+SHA1 9621a70895fbdb6dbe510690e361b27a40fcdd61 t/TestComplete/SubSubBase.pm
+SHA1 c65e6c14049ea9bb1385460bfb61c83c81f3db08 t/TestComplete/Type1.pm
 SHA1 4c3bc879015f89d9fa5422dc46c6ab35c0321fb7 t/TestComplete/Type2.pm
-SHA1 4b1ee65023a83bb8da6030125fd85ec73bb83e5c t/TestProperties.pm
-SHA1 aad424af0324336df5d4a1deedd0cf0f44d60c60 t/cat.t
-SHA1 f0c438fb21e7d610dd5a8911cf303641904607d0 t/minimum_version.t
-SHA1 a7793325aeff111295f71a14fbfe2a4ca328ae1c t/on_devel_hide.t.disabled
-SHA1 6945fe17d34efd6a386ed17277c5e2fc68cebbc6 t/perlcritic.t
-SHA1 0c9b6e1dd3c45bf4a508ca290a5a897298ba3df7 t/perlcriticrc
-SHA1 6b1ba9d164759c77f4b3740277e18bf6dd132749 t/pod-coverage.t
-SHA1 33850bf57e5489ec8cb34833765063f2b71971f7 t/pod-spell.t
-SHA1 346d159f623929acf77e2d0699c5f1009c75ccbc t/pod.t
-SHA1 e7ea998cf4611d84c0d030cb8480b579f0abdde9 t/properties.t
-SHA1 7ccc33fda466df84dcf5a4cd1ee16c94c6139a78 t/stopwords-asksh.txt
+SHA1 0de40e0e75b24b47c22c540d64591a0d94bfc311 t/TestProperties.pm
+SHA1 f6ac3f41e59ebe6c095771195ffad8ce71c18286 t/cat.t
+SHA1 0fd0a82e076932d7b965793bdfc5ede12286a73d t/properties.t
 SHA1 feb4eff0cd7b9cfa8a1d0a1f4b92b6c37fd5cc8d t/testchained.t
-SHA1 fec2d1858455e9aa6acd70eeb500b0f5adab1898 t/testcomplete.t
-SHA1 9fac1afffbc414693c248c7a6c596a9917c8f2ec t/when_sub_name.t.disabled
+SHA1 56bf6612da4ccb2506a07c885597af3b72891094 t/testcomplete.t
+SHA1 6944eecdc4a1f51a808ece0d80845c1dbc081e15 xt/author/00-Kwalitee.t
+SHA1 e71930061e4fc3170c37a07686641ec58a9c28c7 xt/author/00-YAML-META_valid.t
+SHA1 f0c438fb21e7d610dd5a8911cf303641904607d0 xt/author/minimum_version.t
+SHA1 77d3c821b85da6083b14ad604220d9130e29b3e8 xt/author/perlcritic.t
+SHA1 475ff52b753d6bdf270f8d90047b7e84aafddcd2 xt/author/perlcriticrc
+SHA1 6b1ba9d164759c77f4b3740277e18bf6dd132749 xt/author/pod-coverage.t
+SHA1 91958494fd3333e9b128705b00fb362b47f1d322 xt/author/pod-spell.t
+SHA1 346d159f623929acf77e2d0699c5f1009c75ccbc xt/author/pod.t
+SHA1 7ccc33fda466df84dcf5a4cd1ee16c94c6139a78 xt/author/stopwords-asksh.txt
+SHA1 a7793325aeff111295f71a14fbfe2a4ca328ae1c xt/disabled/on_devel_hide.t
+SHA1 9fac1afffbc414693c248c7a6c596a9917c8f2ec xt/disabled/when_sub_name.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.2.2 (Darwin)
 
-iD8DBQFHaB0QJ6CUX3jsf/oRAjmIAJ4lJc06kHfzQ+YMehhxjJmpKdIPwACdH+V+
-PYdbHe0Jz+GSSXs4omY4IW0=
-=Fw8Q
+iD8DBQFHapryJ6CUX3jsf/oRAqS5AJ4jmuLWXduXzKLbqypmCTVE/FA8NQCfaMWJ
+tFYXZxRYtPWiyTqxbw2dKQk=
+=SvgR
 -----END PGP SIGNATURE-----

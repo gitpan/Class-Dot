@@ -17,7 +17,7 @@ extends 'Mammal';
 {
 
     # A cat's properties, with their default values and type of data.
-    property gender      => isa_String('male');
+    has 'gender' => (is => 'rw', isa => 'Str', default => 'male');
     property memory      => isa_Hash;
     property state       => isa_Hash(instinct => 'hungry');
     property family      => isa_Array;

@@ -11,31 +11,45 @@ use warnings;
 use version qw(qv);
 use 5.006000;
 
+# Set to true if Class::Dot::XS loads OK.
+use vars qw($XSokay); ## no critic
+
 use Carp                qw(carp croak);
 use Scalar::Util        qw(blessed);
-use Class::Dot::Types   qw(:std);
 use Class::Plugin::Util qw(require_class);
 use English             qw(-no_match_vars);
 
-BEGIN {
-    eval 'require Sub::Name'; ## no critic
-    if ($EVAL_ERROR) {
-        *subname = sub {
-            my ($sub_name, $sub_coderef) = @_;
-            return $sub_coderef;
-        };
-    }
-    else {
-        Sub::Name->import('subname');
+use DotX;
+
+use Class::Dot::Types            qw(:std);
+use Class::Dot::Meta::Method     qw(
+    install_sub_from_class
+    install_sub_from_coderef
+);
+use Class::Dot::Devel::Sub::Name qw(subname);
+
+# Try to load the Class::Dot::XS speed-up module.
+{
+    no warnings 'all'; ## no critic
+    $Class::Dot::XS::MAGIC_COOKIE = q{Knock. Knock. It's Class::Dot.};
+    if (require_class('Class::Dot::XS')) {
+        Class::Dot::XS->import();
     }
 }
 
-our $VERSION   = qv('2.0.0_07');
+# Try to load the mro module available in recent perl's.
+if (!defined $INC{'mro.pm'}) {
+    no warnings 'all';      ## no critic
+    eval 'require mro';     ## no critic
+}
+
+
+our $VERSION   = qv('2.0.0_08');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my @EXPORT_OK = qw(
     property after_property_set after_property_get
-    extends composite
+    extends composite has
 );
 
 push @EXPORT_OK, @Class::Dot::Types::STD_TYPES;
@@ -52,9 +66,7 @@ my %EXPORT_CLASS = (
 our %OPTIONS_FOR     = ( );
 our %PROPERTIES_FOR  = ( );
 our %IS_FINALIZED    = ( );
-
 our %ISA_CACHE_FOR   = ( );
-
 
 sub import { ## no critic
     my ($this_class, @args) = @_;
@@ -90,7 +102,7 @@ sub import { ## no critic
             $OPTIONS_FOR{$caller_class}{$sub_to_export} = 1;
         }
         else {
-            _install_sub_from_class($this_class,
+            install_sub_from_class($this_class,
                 $sub_to_export => $caller_class
             );
         }
@@ -110,32 +122,12 @@ sub import { ## no critic
     }
 
     while (my ($method_name, $method_ref) = each %INSTALL_METHOD) {
-        _install_sub_from_coderef($method_ref => $caller_class, $method_name);
+        install_sub_from_coderef(
+            $method_ref => $caller_class, $method_name
+        );
     }
 
     $PROPERTIES_FOR{$caller_class} = {};
-
-    return;
-}
-
-sub _install_sub_from_class {
-    my ($pkg_from, $sub_name, $pkg_to) = @_;
-    my $from = join q{::}, ($pkg_from, $sub_name);
-    my $to   = join q{::}, ($pkg_to,   $sub_name);
-
-    no strict 'refs'; ## no critic
-    *{$to} = *{$from};
-
-    return;
-}
-
-sub _install_sub_from_coderef {
-    my ($coderef, $pkg_to, $sub_name) = @_;
-    my $to = join q{::}, ($pkg_to, $sub_name);
-
-    no strict   'refs';     ## no critic
-    no warnings 'redefine'; ## no critic
-    *{$to} = $coderef;
 
     return;
 }
@@ -206,27 +198,114 @@ sub finalize_class {
 
     return 1 if $IS_FINALIZED{$class};
 
+    $ISA_CACHE_FOR{$class} = _traverse_isa_for_property($class);
+
+    $IS_FINALIZED{$class} = 1;
+    return 1;
+}
+
+sub _get_linear_isa_pureperl_rec {
+    my ($class) = @_;
+
     no strict 'refs'; ## no critic
-    my @isa = @{ "${class}::ISA" };
+    my @isa = @{ "$class\::ISA" };
 
-    $ISA_CACHE_FOR{$class} ||= { };
-    my $this_isa_cache = $ISA_CACHE_FOR{$class};
+    my @final;
+    my %stored;
+    ISA:
+    for my $isa (@isa) {
+        next ISA if exists $stored{$isa};
+        $stored{$isa} = 1;
+        my $sub_isa = _get_linear_isa_pureperl_rec($isa);
+        next ISA if not defined $sub_isa;
+        next ISA if not ref $sub_isa;
+        next ISA if not ref $sub_isa eq 'ARRAY';
+        push @final, @{ $sub_isa };
+    }
 
-    if (scalar @isa) {
+    unshift @final, $class;
+
+    return \@final;
+}
+
+sub _get_linear_isa_pureperl {
+    my ($class) = @_;
+
+    my @stream = $class;
+    my @final;
+    my %seen;
+
+    no strict 'refs'; ## no critic
+    STREAM:
+    while (defined (my $atom = shift @stream)) {
+
+        my @isa = @{ "$atom\::ISA" };
+        my @keep;
         ISA:
-        for my $isa ($class, @isa) {
-            PROPERTY:
-            for my $property (keys %{ $PROPERTIES_FOR{$isa} }) {
-                $this_isa_cache->{$property} = 1;
+        for my $isa_class (@isa) {
+            next ISA if exists $seen{$isa_class};
+            $seen{$isa_class} = 1;
+            push @final, $isa_class;
+            push @stream, $isa_class;
+        }
+
+        #push @final, @isa;
+        #push @stream, @isa;
+
+    }
+
+    unshift @final, $class;
+    return \@final;
+}
+
+sub _traverse_isa_for_property {
+    my ($class, $attr) = @_;
+
+    my $has_property;
+    my $all_properties = { };
+
+    my $isa;
+    GETISA: {
+        no strict   'refs';   ## no critic
+        no warnings 'once';   ## no critic
+        $isa = defined $mro::VERSION ? mro::get_linear_isa($class)
+            : _get_linear_isa_pureperl($class);
+    }
+
+    if (scalar @{ $isa } > 1) {
+        ISA:
+        for my $isa (@{ $isa }) {
+            if (defined $attr) {
+                if ($PROPERTIES_FOR{$isa}
+                    && exists $PROPERTIES_FOR{$isa}{$attr}) {
+                    $has_property = $PROPERTIES_FOR{$isa}{$attr};
+                    last ISA;
+                }
+            }
+            else {
+                PROPERTY:
+                while (my ($name, $val) = each %{ $PROPERTIES_FOR{$isa} }) {
+                    # we always use the first property we get, since that
+                    # matches the method resolution order, so we skip the
+                    # property if we already have it.
+                    if (!exists $all_properties->{$name}) {
+                        $all_properties->{$name} = $val;
+                    }
+                }
             }
         }
     }
     else {
-        $this_isa_cache = {%{ $PROPERTIES_FOR{$class} }};
+        if (defined $attr) {
+            $has_property = exists $PROPERTIES_FOR{$class}{$attr};
+        }
+        else {
+            $all_properties = {%{ $PROPERTIES_FOR{$class} }};
+        }
     }
 
-    $IS_FINALIZED{$class} = 1;
-    return 1;
+    return defined $attr ? $has_property
+        : $all_properties;
 }
 
 sub _create_hasattr {
@@ -241,26 +320,11 @@ sub _create_hasattr {
 
         if ($IS_FINALIZED{$class} && exists $ISA_CACHE_FOR{$class}) {
             return $ATTR_EXISTS_CACHED
+                if defined $ISA_CACHE_FOR{$class}{$attribute};
+            return;
         }
             
-        no strict 'refs'; ## no critic;
-        my  @isa = @{ "${class}::ISA" };
-        my $has_property = 0;
-
-        if (scalar @isa) {
-            ISA:
-            for my $isa ($class, @isa) {
-                if ($PROPERTIES_FOR{$isa} && exists $PROPERTIES_FOR{$isa}{$attribute}) {
-                    $has_property = 1;
-                    last ISA;
-                }
-            }
-        }
-        else {
-            $has_property = exists $PROPERTIES_FOR{$class}{$attribute};
-        }
-            
-		return if not $has_property;
+		return if not _traverse_isa_for_property($class, $attribute);
 		return $ATTR_EXISTS;
 	}
 }
@@ -308,26 +372,7 @@ sub properties_for_class {
         return $ISA_CACHE_FOR{$class};
     }
 
-    my %class_properties;
-
-    my @isa_for_class;
-    {
-        no strict 'refs'; ## no critic
-        @isa_for_class = @{ $class . '::ISA' };
-    }
-
-    # Optimization if the class does not use inheritance.
-    if (! scalar @isa_for_class) {
-        return $PROPERTIES_FOR{$class};
-    }
-
-    for my $parent ($class, @isa_for_class) {
-        while (my ($prop, $instance) = each %{ $PROPERTIES_FOR{$parent} }) {
-            $class_properties{$prop} = $instance;
-        }
-    }
-
-    return \%class_properties;
+    return _traverse_isa_for_property($class);
 }
 
 sub _create_destroy_method {
@@ -348,9 +393,29 @@ sub property (@) { ## no critic
     my ($property, $isa) = @_;
     return if not $property;
 
-    my $caller_class = caller;
+    my $caller_class = caller 0;
 
     return define_property($property, $isa => $caller_class);
+}
+
+sub has ($;%) { ## no critic
+    my ($name, %opts) = @_;
+    my $caller_class  = caller 0;
+
+
+    my $is      = exists $opts{is} ? $opts{is} : 'rw';
+    my $type    = $opts{isa};
+    my $default = $opts{default};
+    if (defined $type) {
+        if (exists  $Class::Dot::Types::__TYPEDICT__{$type}) { ## no critic
+            $type = $Class::Dot::Types::__TYPEDICT__{$type}->($default); ## no critic
+        }
+        else {
+            croak "Unknown type constraint: $type";
+        }
+    }
+
+    return define_property($name, $type => $caller_class);
 }
 
 sub extends (@;) { ## no critic
@@ -380,6 +445,7 @@ sub composites_for {
 
 sub superclasses_for {
     my ($inheritor, @superclasses) = @_;
+    my @final_isa;
 
     no strict 'refs'; ## no critic
 
@@ -396,8 +462,13 @@ sub superclasses_for {
             croak "Couldn't load base class '$base'\n";
         }
 
-        push @{ "${inheritor}::ISA" }, $base;
+        push @final_isa, $base;
     }
+
+    # Setting all base classes as one is an optimization
+    # over pushing them one for one, atleast in perl > 5.9.5.
+    # see `perldoc mro` for more information.
+    @{ "$inheritor\::ISA" } = @final_isa;
 
     return;
 }
@@ -418,12 +489,17 @@ sub define_property {
     no strict 'refs'; ## no critic
     if (not *{ $caller_class . "::$property" }{CODE}) {
         my $get_accessor = _create_get_accessor($caller_class, $property, $isa);
-        _install_sub_from_coderef($get_accessor => $caller_class, $property);
+        install_sub_from_coderef($get_accessor => $caller_class, $property);
     }
 
     if (not *{ $caller_class . "::$set_property" }{CODE}) {
         my $set_accessor = _create_set_accessor($caller_class, $property, $isa);
-        _install_sub_from_coderef($set_accessor => $caller_class, $set_property);
+        install_sub_from_coderef($set_accessor => $caller_class, $set_property);
+    }
+
+    if (_NEWSCHOOL_TYPE($isa)) {
+        $isa->{getter_name} = $property;
+        $isa->{setter_name} = $set_property;
     }
 
     $PROPERTIES_FOR{$caller_class}->{$property} = $isa;
@@ -435,7 +511,7 @@ sub after_property_get (@&) { ## no critic
     my ($property, $func_ref) = @_;
     my $caller_class = caller;
 
-    _install_sub_from_coderef($func_ref => $caller_class, $property);
+    install_sub_from_coderef($func_ref => $caller_class, $property);
 
     return;
 }
@@ -445,7 +521,7 @@ sub after_property_set (@&) { ## no critic
     my $caller_class = caller;
     my $set_property = "set_$property";
 
-    _install_sub_from_coderef($func_ref => $caller_class, $set_property);
+    install_sub_from_coderef($func_ref => $caller_class, $set_property);
 
     return;
 }
@@ -466,7 +542,7 @@ sub _create_get_accessor {
             }
             if (!exists $self->{$property_key}) {
                 if (_NEWSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = ${ $isa }->(); # CLASS $isa->default_value();
+                    $self->{$property_key} = $isa->default_value(); #${ $isa }->(); # CLASS $isa->default_value();
                 }
                 elsif (_OLDSCHOOL_TYPE($isa)) {
                     $self->{$property_key} = $isa->($self);
@@ -491,7 +567,7 @@ sub _create_get_accessor {
 
             if (!exists $self->{$property_key}) {
                 if (_NEWSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = ${ $isa }->(); # CLASS $isa->default_value();
+                    $self->{$property_key} = $isa->default_value(); #${ $isa }->(); # CLASS $isa->default_value();
                 }
                 elsif (_OLDSCHOOL_TYPE($isa)) {
                     $self->{$property_key} = $isa->($self);
@@ -509,11 +585,8 @@ sub _create_get_accessor {
 sub _NEWSCHOOL_TYPE {
     my ($type_var) = @_;
     return if not blessed $type_var;
-    my $is_code;
-    eval { $is_code = ref ${ $type_var } eq 'CODE' };
-    #return if $EVAL_ERROR;
-    #return if not ref ${ $type_var } eq 'CODE';
-    return $is_code;
+    return if not $type_var->isa('DotX');
+    return 1;
 }
 
 sub _OLDSCHOOL_TYPE {
@@ -1004,18 +1077,17 @@ For Inside-Out objects. Does not have types.
 
 = CODE COVERAGE
 
----------------------------- ------ ------ ------ ------ ------ ------ ------
-File                           stmt   bran   cond    sub    pod   time  total
----------------------------- ------ ------ ------ ------ ------ ------ ------
-lib/Class/Dot.pm               99.0   98.8   64.3  100.0  100.0   79.0   98.2
-lib/Class/Dot/Types.pm         97.0   97.2  100.0  100.0  100.0   21.0   97.8
-Total                          98.4   98.4   70.6  100.0  100.0  100.0   98.1
----------------------------- ------ ------ ------ ------ ------ ------ ------
+    ---------------------------- ------ ------ ------ ------ ------ ------ ------
+    File                           stmt   bran   cond    sub    pod   time  total
+    ---------------------------- ------ ------ ------ ------ ------ ------ ------
+    lib/Class/Dot.pm               99.0   98.8   64.3  100.0  100.0   79.0   98.2
+    lib/Class/Dot/Types.pm         97.0   97.2  100.0  100.0  100.0   21.0   97.8
+    Total                          98.4   98.4   70.6  100.0  100.0  100.0   98.1
+    ---------------------------- ------ ------ ------ ------ ------ ------ ------
 
 = AUTHOR
 
 Ask Solem, [ask@0x61736b.net].
-
 
 = LICENSE AND COPYRIGHT
 

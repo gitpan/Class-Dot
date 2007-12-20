@@ -39,7 +39,6 @@ my @should_have = qw(
 for my $must_have (@should_have) {
     ok( $properties_for_cat->{$must_have}, "defined property: $must_have" );
 }
-    
 
 ok(ref $properties_for_cat eq 'HASH', 'properties_for_class(Cat)');
 ok(scalar keys %{ $properties_for_cat }, 'properties_for_class(Cat)');

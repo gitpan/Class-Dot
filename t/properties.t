@@ -22,7 +22,7 @@ use Cat;
 
 $ENV{TESTING_CLASS_DOT} = 1;
 
-our $THIS_TEST_HAS_TESTS = 115;
+our $THIS_TEST_HAS_TESTS = 120;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -138,6 +138,11 @@ is( $testo->string, 'the blob jumps high over the flob',
 	'->$property() set after ->__setattr__()'
 );
 
+isa_ok( $testo->regex_empty, 'Regexp', 'isa_Regexp default value');
+my $match_against = 'The quick brown fox jumps over the lazy dog.';
+ok( $match_against =~ $testo->regex_def, 'Can match against isa_Regex');
+is( $testo->bool, 1, 'isa_Bool default value of 0xffff becomes 1');
+
 my $propz = Class::Dot->properties_for_class($testo);
 my $THIS_BLOCK_HAS_TESTS = 4;
 if ($propz->{defval}->can('type')) {
@@ -230,6 +235,7 @@ is( $props_finalized->{__is_retrieved_cached__}, 1,
 
 ok( $testo->__hasattr__('obj'), '__hasattr__ works after finalization');
 is( $testo->__hasattr__('obj'), 2, '__hashattr__ cached after finalization');
+ok(!$testo->__hasattr__('stringnot'), '__hasattr__ false on nonexisting');
 
 # I'm a sucker for coverage :-)
 {
@@ -312,7 +318,7 @@ my $subclass_isa    = [$class_name];
 Class::Dot::Types::_create_class(
     $subclass_name, $subclass_methods, $subclass_isa
 );
-is( $subclass_name->VERSION, 1, 'default class version is 1');
+is( int $subclass_name->VERSION, 1, 'default class version is 1');
 my $subclass_instance = $subclass_name->new({bar => 'xazzA'});
 is( $subclass_instance->hello, 'world',
     'subclass inherits from parent'
@@ -326,7 +332,7 @@ is( $subclass_instance->{bar}, 'xazzA',
 Class::Dot::Types::_create_class(
     'XXX::XXX::XXX::YYYY::YYYY::CCCC', undef, undef, 2.48
 );
-is( XXX::XXX::XXX::YYYY::YYYY::CCCC->VERSION, 2.48,
+is( sprintf("%.2f", XXX::XXX::XXX::YYYY::YYYY::CCCC->VERSION), 2.48,
     'create class without methods',
 );
 
@@ -340,6 +346,18 @@ ok(! Class::Dot::Types->import('ThisSubDoesNotExist'),
 
 eval { Class::Dot::Types->import(':nonstd') };
 ok(! $EVAL_ERROR, 'import nonexisting export class');
+
+
+# Test that invalid type for has() croaks.
+eval {
+    use Class::Dot qw(has);
+    has 'foormpxxxxpltttooooh' => (
+        is => 'rw', isa => 'NonExistingTypeXXXRopmpmasdsd'
+    );
+};
+like($EVAL_ERROR, qr/Unknown type constraint/,
+    'invalid type for has() croaks'
+);
 
 
 # Local Variables:

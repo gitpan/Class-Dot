@@ -78,9 +78,11 @@ if (! $path_to_spell) {
 
 my @stopwords;
 
+my $updir = File::Spec->updir;
+
 STOPWORDFILE:
 for my $stopword_file (@STOPWORD_FILES) {
-    my $this_file = File::Spec->catfile($Bin, $stopword_file);
+    my $this_file = File::Spec->catfile($Bin, $updir, $updir, $stopword_file);
 
     my $fh = FileHandle->new();
     open $fh, "<$this_file" 
@@ -110,7 +112,7 @@ plan( tests => scalar @POD_FILES );
 for my $POD_entry (@POD_FILES) {
     my $POD_file      = File::Spec->catdir(@{ $POD_entry });
     my $prev_dir      = File::Spec->updir();
-    my $POD_file_path = File::Spec->catdir($Bin, $prev_dir, $POD_file);
+    my $POD_file_path = File::Spec->catdir($Bin, $prev_dir, $prev_dir, $POD_file);
     pod_file_spelling_ok($POD_file_path, "Spelling for $POD_file");
 }
 

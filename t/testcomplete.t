@@ -15,7 +15,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 18;
+our $THIS_TEST_HAS_TESTS = 23;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -26,8 +26,15 @@ my $type1_no1 = TestComplete->new({
     type => 'Type1',
     from_base => 'this property lives in base',
     in_type1  => 'this property belongs to Type1',
+    subsub    => 'supervalue',
 });
 isa_ok($type1_no1, 'TestComplete::Type1');
+isa_ok($type1_no1, 'TestComplete::Base');
+isa_ok($type1_no1, 'TestComplete::AlternateBase');
+isa_ok($type1_no1, 'TestComplete::SubSubBase');
+
+is($type1_no1->subsub_base, 'subsub_base', '3rd generation inheritance');
+is($type1_no1->subsub, 'supervalue', '3rd generation inheritance');
 
 is( $type1_no1->from_base, 'this property lives in base',
     'type1 no1 from_base',

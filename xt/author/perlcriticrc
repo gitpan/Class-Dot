@@ -8,5 +8,5 @@
 severity  = brutal
 exclude   = RequireTidyCode RequirePodSections ProhibitCallsToUnexportedSubs 
 [Subroutines::ProhibitExcessComplexity]
-max_mccabe = 13
+max_mccabe = 14
 #ProhibitFlagComments RequireExplicitInclusion 

@@ -1,0 +1,3 @@
+* Implement type constraints.
+* Auto generate types from typemap. (with type constraints above)
+* Implement is => 'rw', 'ro', writeonly etc.

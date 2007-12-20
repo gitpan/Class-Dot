@@ -13,27 +13,16 @@ use 5.006000;
 
 use Carp            qw(croak);
 use Params::Util    qw(_ARRAYLIKE _HASHLIKE);
-use English         qw(-no_match_vars);
 
-BEGIN {
-    eval 'require Sub::Name'; ## no critic
-    if ($EVAL_ERROR) {
-        *subname = sub {
-            my ($sub_name, $sub_coderef) = @_;
-            return $sub_coderef;
-        };
-    }
-    else {
-        Sub::Name->import('subname');
-    }
-}
+use Class::Dot::Devel::Sub::Name qw(subname);
 
-our $VERSION   = qv('2.0.0_07');
+our $VERSION   = qv('2.0.0_08');
 our $AUTHORITY = 'cpan:ASKSH';
 
 our @STD_TYPES = qw(
     isa_String isa_Int isa_Array isa_Hash
     isa_Data isa_Object isa_Code isa_File
+    isa_Bool isa_Regex
 );
 
 my @EXPORT_OK = @STD_TYPES;
@@ -43,16 +32,39 @@ my %EXPORT_CLASS = (
 );
 
 our %__TYPEDICT__ = (
-   'Array'     => \&isa_Array,
-   'Code'      => \&isa_Code,
-   'Data'      => \&isa_Data,
-   'File'      => \&isa_File,
-   'Hash'      => \&isa_Hash,
-   'Int'       => \&isa_Int,
-   'Object'    => \&isa_Object,
-   'String'    => \&isa_String,
+    'Array'     => \&isa_Array,
+    'Code'      => \&isa_Code,
+    'Data'      => \&isa_Data,
+    'File'      => \&isa_File,
+    'Hash'      => \&isa_Hash,
+    'Int'       => \&isa_Int,
+    'Object'    => \&isa_Object,
+    'String'    => \&isa_String,
+    'Bool'      => \&isa_Bool,
+    'Regex'     => \&isa_Regex,
+
+    # Aliases for Moose compatability.
+    'Str'       => \&isa_String,
+    'Num'       => \&isa_Int,
+    'ArrayRef'  => \&isa_Array,
+    'HashRef'   => \&isa_Hash,
+    'CodeRef'   => \&isa_Code,
+    'RegexpRef' => \&isa_Regex,
+    'Role'      => \&isa_Object,
+    'ClassName' => \&isa_String,
 );
 
+# Moose compatability types that does not alias well to built-in types.
+# These should be fixed when type constraints are added.
+my @MOOSE_COMPAT_TYPES = qw(
+    Any Item Undef Defined Value Ref
+    ScalarRef GlobRef
+);
+for my $compat_type (@MOOSE_COMPAT_TYPES) {
+    $__TYPEDICT__{$compat_type} = \&isa_Data;
+}
+
+# All type classes inherits from this.
 my $TYPE_BASE_CLASS = 'DotX';
 
 my $THIS_PKG = __PACKAGE__;
@@ -106,25 +118,30 @@ sub _subclass_name {
 }
 
 sub _create_type_instance {
-    my ($type, $isa) = @_;
+    my ($type, $isa, $constraint) = @_;
+    $constraint = defined $constraint ? $constraint
+        : sub { };
 
     my $full_class_name = _subclass_name($TYPE_BASE_CLASS, $type);
 
     _create_class($full_class_name, {
-            type            => (subname "${full_class_name}::type" => sub {
-                    return $type;
-            }),
             default_value   =>
                 (subname "${full_class_name}::default_value" => sub {
                     my ($self)  = @_;
-                    my $sub_ref = ${ $self };
+                    my $sub_ref = $self->__isa__;
                     return $sub_ref->();
             }),
         },
         [ $TYPE_BASE_CLASS ],
     );
 
-    return bless \$isa, $full_class_name;
+    my $type_instance = $full_class_name->new({
+        type        => $type,
+        __isa__     => $isa,
+        constraint  => $constraint,
+    });
+
+    return $type_instance;
 }
 
 my $created_classes = { };
@@ -166,7 +183,11 @@ sub isa_String { ## no critic
         return;
     };
 
-    return _create_type_instance('String', $generator);
+    my $constraint = subname "${THIS_PKG}::isa_String_check" => sub {
+        defined $_[0] && !ref $_[0]
+    };
+
+    return _create_type_instance('String', $generator, $constraint);
 }
 
 sub isa_Int    { ## no critic
@@ -206,6 +227,16 @@ sub isa_Hash   { ## no critic
     };
 
     return _create_type_instance('Hash', $generator);
+}
+
+sub isa_Bool { ## no critic
+    my ($default_value) = @_;
+
+    my $generator = subname "${THIS_PKG}::isa_Bool_defval" => sub {
+        return $default_value ? 1 : 0;
+    };
+
+    return _create_type_instance('Bool', $generator);
 }
 
 sub isa_Data   { ## no critic
@@ -262,6 +293,20 @@ sub isa_Object { ## no critic
     };
 
     return _create_type_instance('Object', $generator);
+}
+
+sub isa_Regex { ## no critic
+    my ($default_regex) = @_;
+
+    $default_regex = defined $default_regex && ref $default_regex eq 'Regexp'
+        ? $default_regex
+        : qr{^$}xms;
+    
+    my $generator = subname "${THIS_PKG}::isa_Regex_defval" => sub {
+        return $default_regex;
+    };
+
+    return _create_type_instance('Regex', $generator);
 }
 
 1;

@@ -6,7 +6,7 @@
 # $Date$
 package TestComplete::Type1;
 use Class::Dot qw(-new :std);
-extends 'TestComplete::Base';
+extends qw(TestComplete::Base TestComplete::AlternateBase);
 
 property in_type1 => isa_String();
 

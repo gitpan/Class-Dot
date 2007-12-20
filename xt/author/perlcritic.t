@@ -9,6 +9,7 @@ use warnings;
 use File::Spec;
 use Test::More;
 use English qw(-no_match_vars);
+use FindBin qw($Bin);
 
 if ($ENV{TEST_COVERAGE}) {
     plan( skip_all => 'Disabled when testing coverage.' );
@@ -26,7 +27,7 @@ if ( $EVAL_ERROR ) {
     plan( skip_all => $msg );
 }
 
-my $rcfile = File::Spec->catfile( 't', 'perlcriticrc' );
+my $rcfile = File::Spec->catfile( $Bin, 'perlcriticrc' );
 Test::Perl::Critic->import( -profile => $rcfile );
 # TODO inc/M/ + inc/Module/Build/M.pm
 all_critic_ok('lib/');
