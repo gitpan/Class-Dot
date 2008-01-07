@@ -15,7 +15,7 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 15;
+our $THIS_TEST_HAS_TESTS = 14;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
@@ -38,7 +38,6 @@ is( $chained->birthdate_year, 1982, 'birthdate_year() chained');
 
 is( $chained->with_default, 'hello world!', 'with default var');
 is( $chained->reg, 'hello universe!', 'with no type');
-is( $chained->reglazy, 'hello lazy!', 'with lazy type');
 
 $chained = TestChained->new->name('Ask Solem')
     ->email('askh@opera.com')

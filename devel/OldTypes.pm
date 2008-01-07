@@ -4,7 +4,7 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-package Class::Dot::Types;
+package Class::Dot::Typemap;
 
 use strict;
 use warnings;
@@ -14,9 +14,12 @@ use 5.006000;
 use Carp            qw(croak);
 use Params::Util    qw(_ARRAYLIKE _HASHLIKE);
 
+use Class::Dot::Meta::Method qw(install_sub_from_class);
+use Class::Dot::Meta::Type   qw(create_type_instance);
+
 use Class::Dot::Devel::Sub::Name qw(subname);
 
-our $VERSION   = qv('2.0.0_08');
+our $VERSION   = qv('2.0.0_10');
 our $AUTHORITY = 'cpan:ASKSH';
 
 our @STD_TYPES = qw(
@@ -95,80 +98,8 @@ sub import { ## no critic
 
     no strict 'refs'; ## no critic;
     for my $sub_to_export (@subs_to_export) {
-        _install_sub_from_class($this_class, $sub_to_export => $caller_class);
+        install_sub_from_class($this_class, $sub_to_export => $caller_class);
     }
-
-    return;
-}
-
-sub _install_sub_from_class {
-    my ($pkg_from, $sub_name, $pkg_to) = @_;
-    my $from = join q{::}, ($pkg_from, $sub_name);
-    my $to   = join q{::}, ($pkg_to,   $sub_name);
-
-    no strict 'refs'; ## no critic
-    *{$to} = *{$from};
-
-    return;
-}
-
-sub _subclass_name {
-    my ($parent_class, $subclass_name) = @_;
-    return join q{::}, $parent_class, $subclass_name;
-}
-
-sub _create_type_instance {
-    my ($type, $isa, $constraint) = @_;
-    $constraint = defined $constraint ? $constraint
-        : sub { };
-
-    my $full_class_name = _subclass_name($TYPE_BASE_CLASS, $type);
-
-    _create_class($full_class_name, {
-            default_value   =>
-                (subname "${full_class_name}::default_value" => sub {
-                    my ($self)  = @_;
-                    my $sub_ref = $self->__isa__;
-                    return $sub_ref->();
-            }),
-        },
-        [ $TYPE_BASE_CLASS ],
-    );
-
-    my $type_instance = $full_class_name->new({
-        type        => $type,
-        __isa__     => $isa,
-        constraint  => $constraint,
-    });
-
-    return $type_instance;
-}
-
-my $created_classes = { };
-sub _create_class {
-    my ($class_name, $methods_ref, $append_isa_ref, $version) = @_;
-    return if exists $created_classes->{$class_name};
-
-    $version = defined $version ? $version
-        : 1.0;
-
-    no strict 'refs';       ## no critic
-    no warnings 'redefine'; ## no critic
-
-    if (_ARRAYLIKE($append_isa_ref)) {
-        my $isa_ref = \@{ "${class_name}::ISA" };
-        push @{ $isa_ref }, @{ $append_isa_ref };
-    }
-
-    if (_HASHLIKE($methods_ref)) {
-        while (my ($method_name, $method_code) = each %{ $methods_ref }) {
-            *{ "${class_name}::$method_name" } = $method_code;
-        }
-    }
-
-    ${ "${class_name}::VERSION" } = $version;
-
-    $created_classes->{$class_name} = 1;
 
     return;
 }
@@ -187,7 +118,7 @@ sub isa_String { ## no critic
         defined $_[0] && !ref $_[0]
     };
 
-    return _create_type_instance('String', $generator, $constraint);
+    return create_type_instance('String', $generator, $constraint);
 }
 
 sub isa_Int    { ## no critic
@@ -199,7 +130,7 @@ sub isa_Int    { ## no critic
         return;
     };
 
-    return _create_type_instance('Int', $generator);
+    return create_type_instance('Int', $generator);
 }
 
 sub isa_Array  { ## no critic
@@ -211,7 +142,7 @@ sub isa_Array  { ## no critic
             : [ ];
     };
 
-    return _create_type_instance('Array', $generator);
+    return create_type_instance('Array', $generator);
 }
 
 sub isa_Hash   { ## no critic
@@ -226,7 +157,7 @@ sub isa_Hash   { ## no critic
         # so we return a new anonymous hash if it ain't.
     };
 
-    return _create_type_instance('Hash', $generator);
+    return create_type_instance('Hash', $generator);
 }
 
 sub isa_Bool { ## no critic
@@ -236,7 +167,7 @@ sub isa_Bool { ## no critic
         return $default_value ? 1 : 0;
     };
 
-    return _create_type_instance('Bool', $generator);
+    return create_type_instance('Bool', $generator);
 }
 
 sub isa_Data   { ## no critic
@@ -248,7 +179,7 @@ sub isa_Data   { ## no critic
         return;
     };
 
-    return _create_type_instance('Data', $generator);
+    return create_type_instance('Data', $generator);
 }
 
 sub isa_Code (;&;) { ## no critic
@@ -259,7 +190,7 @@ sub isa_Code (;&;) { ## no critic
             : subname 'lambda-non' => sub { };
     };
 
-    return _create_type_instance('Code', $generator);
+    return create_type_instance('Code', $generator);
 }
 
 sub isa_File   { ## no critic
@@ -275,7 +206,7 @@ sub isa_File   { ## no critic
         }
     };
 
-    return _create_type_instance('File', $generator);
+    return create_type_instance('File', $generator);
 }
 
 sub isa_Object { ## no critic
@@ -292,7 +223,7 @@ sub isa_Object { ## no critic
         return;
     };
 
-    return _create_type_instance('Object', $generator);
+    return create_type_instance('Object', $generator);
 }
 
 sub isa_Regex { ## no critic
@@ -306,7 +237,7 @@ sub isa_Regex { ## no critic
         return $default_regex;
     };
 
-    return _create_type_instance('Regex', $generator);
+    return create_type_instance('Regex', $generator);
 }
 
 1;
@@ -317,7 +248,7 @@ __END__
 
 = NAME
 
-Class::Dot::Types - Functions returning default values for Class::Dot types.
+Class::Dot::Typemap - Functions returning default values for Class::Dot types.
 
 = VERSION
 
@@ -325,9 +256,9 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 
-    use Class::Dot::Types qw(:std);
+    use Class::Dot::Typemap qw(:std);
 
-    use Class::Dot::Types qw( isa_String isa_Int );
+    use Class::Dot::Typemap qw( isa_String isa_Int );
 
 
 = DESCRIPTION

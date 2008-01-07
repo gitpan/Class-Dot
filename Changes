@@ -1,5 +1,89 @@
 Revision history for Class-Dot
 
+2.0_10 Sun Jan 07 13:17:00 GMT+2 2007 [asksh@cpan.org]
+
+    - No API Changes.
+
+    - Added policies: Class::Dot::Policy::Mutator,
+      Class::Dot::Policy::Constrained and Class::Dot::Policy::Affordance.
+
+    - Attributes now can have choose between different privacy settings:
+        public (alias: rw), private (alias: ro) and writeonly (alias: wo).
+      This means that a public attribute will have both set and get accessor,
+      a private attribute will only have get accessor, and a writeonly
+      accessor will only have a set accessor.
+
+    - Lots of new tests. Tests has been categorized in a additional directory
+      level. Old 1.x tests has been moved to t/010-std_1.x_tests/, New 2.x
+      tests is now in t/020-std_2.x_tests/. Also some tests from Moose has
+      been adopted (thanks to the Moose team!).
+
+    - More documentation. The documentation is still not complete though.
+
+    - In older perls (atleast in 5.6.2) any Class->isa('UNIVERSAL') returns
+      true, so had to fix Class Name to use the way Class::Plugin::Util uses instead.
+
+    - Changed dependency Test::Exception from recommended to build_requires.
+
+    - Registry variables now lexical instead of global.
+
+    - Massive clean-up. The huge Class::Dot module now split up into a vast
+      number of modules, making Class::Dot a lot more extensible.
+
+    - All Class::Dot classes now inherits from Class::Dot::Object.
+
+    - All Class::Dot classes now has their own metaclass instance.
+  
+    - The base class for all types (DotX) now renamed to Class::Dot::Type.
+     
+    - Class::Dot::Types now renamed to Class::Dot::Typemap.
+
+    - Typemap generator now does type inheritance lookup to find fields
+      (default_value & constraint).
+
+    - Mutators will be created if neither -setter_prefix or -getter_prefix is
+      set. (See Class::Dot::Policy::Mutator).
+
+    - __getattr__ now initialize the default type if the attribute has not
+       been accessed by the get accessor yet.
+
+    - Base class for types (DotX) renamed to Class::Dot::Type. The name was
+      not satisfactory, sorry for any inconvenience this name has caused.
+      We're now a good CPAN citizen again :)
+
+    - All Class::Dot classes now inherits from Class::Dot::Object.
+      (this might change to mixin in the future, we'll see how it works out).
+
+2.0_09 Fri Dec 21 20:11:52 GMT+2 2007 [asksh@cpan.org]
+
+    - lib/Class/Dot/Types.pm is now auto generated from the Typemap file.
+
+    - *EXPERIMENTAL* Types can now have constraints. That means that you can have the set_
+      accessor check if the given value actually conforms to the type of the
+      property.
+
+      Since this feature is experimental and can break code written for
+      earlier versions of Class::Dot, you have to explicitly turn it on for a
+      class via the use-line with the -constraints option, like this:
+
+        use Class::Dot qw(:new -constraints);
+
+      All Class::Dot options are on a class by class basis, so setting this
+      option in one class, won't affect the others.
+    
+    - You can now use Class::Dot as a drop-in replacement for Moose in some
+      situations.  (Depending on how much of Moose's feature-set you use).
+        - Supports the Moose (has 'name' => ...) keyword.
+        - Support for all Moose types.
+        - Supports the Moose extends() keyword.
+        - Supports type constraints via the -constraints class option.
+
+        - Does not support roles.
+        - Does not support the __PACKACKE__->meta method.
+        - Does not suppoer after, augment, before etc.
+
+    - NOTE: Now dies if you supply unknown class options on the use-line.
+
 2.0_08 Thu Dec 20 12:44:43 GMT+2 2007 [asksh@cpan.org]
 
     - There was a bug in the ISA traversal. It would not fetch recursive
@@ -7,6 +91,20 @@ Revision history for Class-Dot
 
     - Class::Dot now uses mro::get_linear_isa if available. (mro was
       introduced in perl 5.9.5 and is included with the recent 5.10.0 release)
+
+      mro::get_linear_isa is _much_ faster than the regular isa traversal
+      implementation we use that is pure perl, so you might get better
+      performance by upgrading to perl 5.10.0.
+   
+      NOTE FOR USERS OF PERL < 5.10.0 AND Class::C3
+
+      If are already using the C3 method resolution order for your classes,
+      you can install the MRO::Compat and Class::C3::XS modules to get
+      a ISA traversal method implemented in C for older perl's.
+
+      MRO::Compat's ISA traversal method for the DFS method resolution
+      order is actually slower than Class::Dot's, but because of how the way
+      MRO::Compat works we can't disable it if it is in installed.
 
     - Class::Dot now tries to load Class::Dot::XS which is a speed-up module
       in the making. It will be uploaded to CPAN when it's finished.

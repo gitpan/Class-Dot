@@ -4,98 +4,22 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot2 - Properties for Perl 5.
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_10
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Meta::Method;
+     use Class::Dot2;
  
-     # ### Install a method from the current class.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_class
-     );
- 
-     # The local method
-     sub meaning_of_life {
-         return 42;
-     }
- 
-     sub import_my_method {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         install_sub_from_class(
-             ($this_class, 'meaning_of_life') => $caller_class
-         );
- 
-         return;
-     }
- 
- 
-     # ### Install a method by code reference.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_coderef
-     );
- 
-     sub import_my_methodref {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         my $the_sub = sub {
-             return 42;
-         };
- 
-         install_sub_from_coderef(
-             $the_sub => ($caller_class, 'meaning_of_life');
-         }
- 
-         return;
-     }
+     # is the same as:
+     # use Class::Dot qw(-new -optimized :std);
 
 =head1 DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
-
-=head1 SUBROUTINESE<sol>METHODS
-
-=head2 CLASS METHODS
-
-=head3 C<<< install_sub_from_class(($class_from, $method_name) => $class_to) >>>
-
-Installs a method from a class into another class.
-
-=head3 C<<< install_sub_from_coderef($coderef => ($class_to, $method_name)) >>>;
-
-Installs a code reference in a class as a method.
-
-=head1 DIAGNOSTICS
-
-This class has no error messages.
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-This module requires no configuration file or environment variables.
-
-=head1 DEPENDENCIES
-
-=over
-
-=item *
-
-L<version>
-
-=back
-
-=head1 INCOMPATIBILITIES
-
-None known.
+See L<Class::Dot>
 
 =head1 BUGS AND LIMITATIONS
 
@@ -175,3 +99,4 @@ POSSIBILITY OF SUCH DAMAGES.
 #   fill-column: 78
 # End:
 # vim: expandtab tabstop=4 shiftwidth=4 shiftround
+    

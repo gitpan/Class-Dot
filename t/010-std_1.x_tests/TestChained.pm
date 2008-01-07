@@ -19,7 +19,6 @@ property birthdate_year => isa_Int;
 
 property with_default   => isa_String("hello world!");
 property reg            => "hello universe!";
-property reglazy        => sub { return "hello lazy!" };
 
 # -rebuild to fill coverage for using rebuild when $new is not true.
 sub BUILD {

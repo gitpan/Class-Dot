@@ -4,76 +4,70 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Object - The default base object for Class::Dot classes.
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
-
-=head1 SYNOPSIS
-
-     use Class::Dot::Meta::Method;
- 
-     # ### Install a method from the current class.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_class
-     );
- 
-     # The local method
-     sub meaning_of_life {
-         return 42;
-     }
- 
-     sub import_my_method {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         install_sub_from_class(
-             ($this_class, 'meaning_of_life') => $caller_class
-         );
- 
-         return;
-     }
- 
- 
-     # ### Install a method by code reference.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_coderef
-     );
- 
-     sub import_my_methodref {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         my $the_sub = sub {
-             return 42;
-         };
- 
-         install_sub_from_coderef(
-             $the_sub => ($caller_class, 'meaning_of_life');
-         }
- 
-         return;
-     }
+This document describes C<<< Class::Dot >>> version 2.0.0_10
 
 =head1 DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This is the default base class for L<Class::Dot> classes. You don't have to
+inherit from this class manually, it is done automaticly when you import
+C<<< Class::Dot >>> in your class.
+
+Actually it is a bit more complex than that, it is the base class for
+C<<< Class::Dot >>>'s default metaclass, L<Class::Dot::Meta::Class>.
+You can extend it's functionality by subclassing C<<< Class::Dot::Meta::Class >>>
+and then set that subclass as the metaclass with the C<<< -metaclass >>> option,
+via there you can decide which base class you want.
+
+This class contain useful methods for introspection on your class's
+attributes, metaclass and so on.
+
+Notice how this base class has no constructor or destructor, these are built
+dynamicly by the metaclass.
 
 =head1 SUBROUTINESE<sol>METHODS
 
-=head2 CLASS METHODS
+=head2 INSTANCE METHODS
 
-=head3 C<<< install_sub_from_class(($class_from, $method_name) => $class_to) >>>
+=head3 C<<< __hasattr__($attribute_name) >>>
 
-Installs a method from a class into another class.
+Returns true if the class has the attribute C<<< $attribute_name >>>.
 
-=head3 C<<< install_sub_from_coderef($coderef => ($class_to, $method_name)) >>>;
+=head3 C<<< __getattr__($attribute_name) >>>
 
-Installs a code reference in a class as a method.
+Get the value of an attribute.
+
+=head3 C<<< __setattr__($attribute_name, $value) >>>
+
+Set the value of an attribute.
+
+B<NOTE> This will not check if the value conforms to the type constraint
+even if the C<<< -constrained >>> option is set. To do this dynamically you have to
+do it like this:
+
+     my $set_attr = $self->__meta__($attribute)->setter_name();
+     $self->$set_attr($value);
+
+=head3 C<<< __meta__($attribute_name >>>)
+
+Return attribute metadata for an attribute by it's name.
+This will return the attribute's type instance. See L<Class::Dot::Type>
+for the methods available.
+
+=head3 C<<< __metaclass__ >>>
+
+Return the instance of the metaclass for this class.
+
+=head3 C<<< __is_finalized__() >>>
+
+Returns true if this class is finalized.
+
+=head3 C<<< __finalize__() >>>
+
+Finalize the class.
 
 =head1 DIAGNOSTICS
 
@@ -107,7 +101,11 @@ web interface at L<CPAN Bug tracker|http://rt.cpan.org>.
 
 =head1 SEE ALSO
 
+=head2 L<Class::Dot::Manual>
+
 =head2 L<Class::Dot>
+
+=head2 L<Class::Dot::Type>
 
 =head1 AUTHOR
 
@@ -175,3 +173,4 @@ POSSIBILITY OF SUCH DAMAGES.
 #   fill-column: 78
 # End:
 # vim: expandtab tabstop=4 shiftwidth=4 shiftround
+

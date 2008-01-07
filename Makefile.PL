@@ -8,7 +8,7 @@ use strict;
 use warnings;
 require 5.00600;
 
-use Carp;   qw(carp croak);
+use Carp qw(carp croak);
 use English qw(-no_match_vars);
 
 BEGIN {
@@ -110,7 +110,7 @@ EOFTIP
 
 use inc::Module::Install;
 
-my $THIS_VERSION = '2.0.0_08';
+my $THIS_VERSION = '2.0.0_10';
 
 name                'Class-Dot';
 author              'Ask Solem <asksh@cpan.org>';
@@ -123,7 +123,6 @@ requires            'Class::Plugin::Util' => 0.007;
 requires            'Params::Util'        => 0;
 
 recommends          'Sub::Name'        => 0;
-recommends          'Test::Exception'  => 0.25;
 recommends          'IO::Capture'      => 0;
 
 for my $contextual_recommendation (@extra_recommends) {
@@ -133,6 +132,7 @@ for my $contextual_recommendation (@extra_recommends) {
 
 build_requires      'Test::Simple'     => 0.42;
 build_requires      'Scalar::Util'     => 1.14;
+build_requires      'Test::Exception'  => 0.25;
 
 perl_version        5.006_000;
 
@@ -141,6 +141,8 @@ no_index            directory => 'examples';
 no_index            directory => 'devel';
 
 distribution_type   'module';
+
+tests('t/*.t t/*/*.t');
 
         
 

@@ -95,17 +95,35 @@ Simple and fast properties for Perl 5.
 
 =item *
 
-Does not use inheritance.
+Properties are fully overrideable (Even when set using C<<< new({}) >>>).
 
-=item *
+=back
 
-Properties are fully overridable (Even when set using C<<< new({}) >>>).
+=over
 
 =item *
 
 Lets you define types for your properties, like Hash, String, Int, File, Code, Array and so on.
 
 =back
+
+=over
+
+=item *
+
+Supports type constraints.
+
+=back
+
+=over
+
+=item *
+
+Is not here to replace Moose, but can be used as a drop-in replacement for Moose to get
+
+=back
+
+   better runtime performance. (does only support a small subset of Moose!)
 
 All the types are populated with sane defaults, so you no longer have to
 write code like this:
@@ -228,7 +246,7 @@ be L<Moose>, it's meant to be simple and fast).
 
 =head2 CLASS METHODS
 
-=head3 C<<< property($property, $default_value) >>>
+=head3 C<<< property($property_name, %options) >>>
 
 =for apidoc VOID = Class::Dot::property(string $property, data $default_value)
 
@@ -248,7 +266,11 @@ will create the methods:
 
 with default return values -hello world- and -303-.
 
-=head3 C<<< define_property($property_name, $default_value, $in_class) >>>
+=head3 C<<< has($property_name, %options) >>>
+
+Alias to C<<< property >>>.
+
+=head3 C<<< define_property($property_name, $default_value, $in_class, $options) >>>
 
 Same as C<<< property() >>> except you define which class to install the property
 in.
@@ -463,6 +485,35 @@ Please report any bugs or feature requests to
 L<bug-class-dot@rt.cpan.org|mailto:bug-class-dot@rt.cpan.org>, or through the web interface at
 L<CPAN Bug tracker|http://rt.cpan.org>.
 
+=head1 BENCHMARK
+
+This is a benchmark to show an example of how C<<< Class::Dot >>> performs over other
+similar implementations. The source code for the benchmark can be found in
+the C<<< Class::Dot >>> distributions C<<< devel/dotbench.pl >>> file.
+
+                           Rate   moose class::dot class::dot-finalized pureperl-OO
+     moose                 1186/s      --       -96%                 -96% -97%
+     class::dot           27624/s   2229%         --                 -12% -28%
+     class::dot-finalized 31546/s   2560%        14%                   -- -18%
+     pureperl-OO          38610/s   3156%        40%                  22%
+
+These are pretty simple programs that just creates an instance and sets+gets
+some properties. Products may perform differently is other scenarios, after
+all it's just a benchmark.
+
+C<<< class::dot-finalized >>> is the same program but where the class is finalized.
+Finalizing the class is a simple operation, but after the class has been
+finalized you can not add any new properties or base classes.
+
+This is how you do it:
+
+     __PACAKGE__->__finalize__();
+
+Not that this should be done 'after' you have called the C<<< Class::Dot >>>
+functions you need.
+
+--
+
 =head1 SEE ALSO
 
 =head2 L<Moose>
@@ -472,8 +523,37 @@ C<<< Class::Dot >>>, but it is also slower.
 
 =head2 L<Class::Accessor>
 
-Simple and fast implementation of properties. However, I don't like
+=head2 L<Class::Accessor::Fast>
+
+Simple generation of accessors (mutators). You can override the accessors
+themselves, but if you use the default constructor, you can't intercept
+the setting of values when you do:
+
+     my $instance = Class->new({
+         name => 'George Louis Constanza',
+     });
+
+To do that you would have to create a new constructor like this:
+
+     sub new {
+         my ($class, $options_ref) = @_;
+ 
+         my $self = bless { }, $class;
+ 
+         while (my ($attr_name, $attr_val) = each %{ $options_ref }) {
+             if ($self->can($attr_name)) {
+                 $self->$attr_name($attr_val);
+             }
+         }
+ 
+         return $self;
+     }
+
+Which is a hassle done automatically in C<<< Class::Dot >>>,
+and, on a personal note, I really don't like
 the syntax (C<<< __PACKAGE__->mk_accessors >>> etc).
+
+L<Class::Accessor::Fast> is 'fast' however! 
 
 =head2 L<Class::InsideOut>
 

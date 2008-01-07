@@ -1,0 +1,264 @@
+#!/opt/perl/bin/perl
+# $Id$
+# $Source$
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
+use strict;
+use warnings;
+
+use devel::Generator::Typemap;
+
+class  'Class::Dot::Typemap';
+output 'lib/Class/Dot/Typemap.pm';
+
+alias 'Str'         => 'String';
+alias 'Num'         => 'Number';
+alias 'FileHandle'  => 'File';
+alias 'RegexRef'    => 'RegexpRef'; # << I really like Regex better than Regexp.
+alias 'Regex'       => 'Regexp';
+
+stdtypes qw(
+    String Int Array Hash
+    Data Object Code File
+    Bool Regex
+);
+
+my $any_type = type {
+    default_value => q
+    {
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    },
+    constraint    => q
+    {
+        1
+    },
+};
+
+typedef 'Any'    => $any_type;
+typedef 'Item'   => $any_type;
+typedef 'Data'   => $any_type;
+
+typedef 'Undef'  => type {
+    isa         => 'Item',
+    constraint  => q
+    {
+        !defined $_[0];
+    },
+};
+
+typedef 'Defined' => type {
+    isa         => 'Item',
+    constraint  => q
+    {
+        defined $_[0];
+    }
+};
+
+typedef 'Bool' => type {
+    isa             => 'Item',
+    default_value   => q
+    {
+        my ($default_value) = @args;
+        return $default_value ? 1 : 0
+    },
+    constraint      => q
+    {
+        !defined $_[0] || $_[0] eq q{} || "$_[0]" eq '1' || "$_[0]" eq '0';
+
+    },
+};
+
+typedef 'Value' => type {
+    isa             => 'Defined',
+    default_value    => q
+    {
+        my ($default_value) = @args;
+        return $default_value
+            if defined $default_value;
+        return;
+    },
+    constraint      => q
+    {
+        defined $_[0] && !ref $_[0];
+    },
+};
+
+typedef 'Ref'  => type {
+    isa             => 'Defined',
+    constraint      => q
+    {
+        ref $_[0];
+    },
+};
+
+typedef 'String' => type {
+
+    isa => 'Value',
+
+    constraint => q
+    {
+        defined($_[0]) && !ref($_[0]);
+    },
+};
+
+typedef 'Number' => type {
+    isa             => 'Value',
+
+    requires        => 'Scalar::Util',
+
+    constraint => q
+    {
+        !ref $_[0] && Scalar::Util::looks_like_number( $_[0] );
+    },
+};
+
+typedef 'Int'  => type {
+    isa             => 'Number',
+
+    constraint      => q
+    {
+        defined $_[0] && !ref $_[0] && $_[0] =~ m/^-?[0-9]+$/xms;
+    },
+};
+
+my %reftypes = (
+    ScalarRef   => 'SCALAR',
+    ArrayRef    => 'ARRAY',
+    HashRef     => 'HASH',
+    CodeRef     => 'CODE',
+    RegexpRef   => 'Regexp',
+    GlobRef     => 'GLOB',
+);
+
+while (my ($type_name, $reftype) = each %reftypes) {
+    typedef $type_name => type {
+        isa             => 'Ref',
+        constraint      => qq
+        {
+            ref \$_[0] eq "$reftype";
+        }
+    };
+}
+
+typedef 'Array' => type {
+    isa             => 'ArrayRef',
+    default_value   => q
+    {
+        my @default_values = @args;
+        return scalar @default_values ? \@default_values
+            : [ ];
+    },
+};
+
+typedef 'Hash' => type {
+    isa             => 'HashRef',
+    default_value   => q
+    {
+        my %default_values = @args;
+        return scalar keys %default_values ? \%default_values
+            : { };
+
+        # have to test if there are any entries in the hash
+        # so we return a new anonymous hash if it ain't.
+    },
+};
+
+typedef 'Code' => type {
+    isa             => 'CodeRef',
+    prototype       => q{;&;},
+    default_value   => q
+    {
+        my ($default_coderef) = @args;
+        return defined $default_coderef ? $default_coderef
+            : subname 'lambda-nil' => sub { };
+    },
+};
+
+typedef 'Regexp' => type {
+    isa             => 'RegexpRef',
+    default_value   => q
+    {
+        my ($default_regex) = @args;
+        return defined $default_regex && ref $default_regex eq 'Regexp'
+            ? $default_regex
+            : qr{\A\z}xms
+    },
+};
+
+typedef 'File' => type {
+    isa             => 'GlobRef',
+
+    requires        => 'Scalar::Util',
+
+    default_value   => q
+    {
+        my ($default_value) = @args;
+
+        return $default_value
+            if defined $default_value;
+
+        if (! $INC{'FileHandle.pm'}) {
+            require FileHandle;
+        }
+        return FileHandle->new();
+    },
+
+    constraint      => q
+    {
+        ref $_[0] eq 'GLOB' && Scalar::Util::openhandle($_[0]);
+    },
+};
+
+typedef 'Object' => type {
+    isa             => 'Ref',
+
+    requires        => 'Scalar::Util',
+   
+    default_value   => q
+    {
+        my $class = shift @args;
+        return if not defined $class;
+
+        my %opts;
+        if (!scalar @args % 2) {
+            %opts = @args;
+        }
+
+        if (delete $opts{auto}) {
+            return $class->new({%opts});
+        }
+
+        return;
+    },
+    constraint      => q
+    {
+        my $blessed = Scalar::Util::blessed($_[0]);
+        $blessed && $blessed ne 'Regexp';
+    },
+};
+
+typedef 'ClassName' => type {
+    isa             => 'Str',
+    
+    constraint      => q
+    {
+        _is_valid_class_name($_[0]);
+    },
+};
+
+typedef 'Role'      => type {
+    isa             => 'Object',
+    requires        => 'Scalar::Util',
+    
+    constraint      => q
+    {
+        Scalar::Util::blessed($_[0]) && $_[0]->can('does')
+    },
+};
+
+
+WRITE_TYPES;

@@ -4,80 +4,90 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Meta::Accessor - Automatic generation of accessor methods
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_10
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Meta::Method;
+     use Class::Dot::Meta::Accessor;
  
-     # ### Install a method from the current class.
+     my $accessor_gen = Class::Dot::Meta::Accessor->new({
+         type => 'Overrideable'
+     }); 
  
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_class
+     my $get_accessor = $accessor_gen->create_get_accessor(
+         $caller_class, $attribute_name, $attribute_type, $options, $privacy
      );
  
-     # The local method
-     sub meaning_of_life {
-         return 42;
-     }
- 
-     sub import_my_method {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         install_sub_from_class(
-             ($this_class, 'meaning_of_life') => $caller_class
-         );
- 
-         return;
-     }
- 
- 
-     # ### Install a method by code reference.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_coderef
+     my $set_accessor = $accessor_gen->create_set_accessor(
+         $caller_class, $attribute_name, $attribute_type, $options, $privacy
      );
  
-     sub import_my_methodref {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         my $the_sub = sub {
-             return 42;
-         };
- 
-         install_sub_from_coderef(
-             $the_sub => ($caller_class, 'meaning_of_life');
-         }
- 
-         return;
-     }
+     my $mutator = $accessor_gen->create_mutator(
+         $caller_class, $attribute_name, $attribute_type, $options, $privacy
+     );
 
 =head1 DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This class provides automatic generation of accessor methods.
+It is a factory class that delegates the construction to the proper acessor
+type, which is provided with the C<<< new() >>> constructors C<<< type >>> option.
+
+Common accessor types include:
+
+=over
+
+=item *
+
+Overrideable
+
+=back
+
+See L<Class::Dot::Meta::Accessor::Overrideable>
+
+=over
+
+=item *
+
+Chained
+
+=back
+
+See L<Class::Dot::Meta::Accessor::Chained>
+
+=over
+
+=item *
+
+Constrained
+
+=back
+
+See L<Class::Dot::Meta::Accessor::Constrained>
+
+All accessor types uses the base class L<Class::Dot::Accessor::Base>, which
+defines their interface.
 
 =head1 SUBROUTINESE<sol>METHODS
 
-=head2 CLASS METHODS
+=head2 CLASS CONSTRUCTOR
 
-=head3 C<<< install_sub_from_class(($class_from, $method_name) => $class_to) >>>
+=head3 C<<< new({type => $accessor_type}) >>>
 
-Installs a method from a class into another class.
-
-=head3 C<<< install_sub_from_coderef($coderef => ($class_to, $method_name)) >>>;
-
-Installs a code reference in a class as a method.
+Create a new accessor generator with type C<<< $accessor_type >>>.
 
 =head1 DIAGNOSTICS
 
-This class has no error messages.
+=head2 C<<< Missing accessor type >>>
+
+You forgot to provide the accessor type.
+
+=head2 C<<< No such accessor type: %s >>>
+
+Could not find the class for the accessor type you provided.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -90,6 +100,14 @@ This module requires no configuration file or environment variables.
 =item *
 
 L<version>
+
+=back
+
+=over
+
+=item *
+
+L<Class::Plugin::Util>
 
 =back
 
@@ -107,7 +125,7 @@ web interface at L<CPAN Bug tracker|http://rt.cpan.org>.
 
 =head1 SEE ALSO
 
-=head2 L<Class::Dot>
+=head2 L<Class::Dot::Meta::Accessor::Base>
 
 =head1 AUTHOR
 

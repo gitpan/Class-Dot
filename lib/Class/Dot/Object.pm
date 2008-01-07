@@ -4,139 +4,161 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-package Class::Dot::Meta::Method;
+package Class::Dot::Object;
 
 use strict;
 use warnings;
 use version;
 use 5.00600;
 
-use Carp qw(croak);
+our $VERSION    = qv('2.0.0_10');
+our $AUTHORITY  = 'cpan:ASKSH';
 
-our $VERSION   = qv('2.0.0_10');
-our $AUTHORITY = 'cpan:ASKSH';
+use Class::Dot::Registry;
+my $REGISTRY = Class::Dot::Registry->new();
 
-my %EXPORT_OK  = map { $_ => 1 } qw(
-    install_sub_from_class
-    install_sub_from_coderef
-);
+my $ATTR_EXISTS         = 1;
+my $ATTR_EXISTS_CACHED  = 2;
+my $ATTR_NO_SUCH_ATTR;        #<< must be undef.
 
-sub import {
-    my ($this_class, @subs) = @_;
-    my $caller_class = caller 0;
+sub __getattr__ {
+    my ($self, $attribute) = @_;
+    if (! exists $self->{$attribute}) {
+        my $attr_meta = $self->__meta__($attribute);
+        return if not defined $attr_meta;
+        $self->{$attribute} = $attr_meta->default_value();
+    }
+    return $self->{$attribute};
+}
 
-    for my $sub (@subs) {
-        if (! exists $EXPORT_OK{$sub}) {
-            croak "$sub is not exported by " . __PACKAGE__;
-        }
-        install_sub_from_class(($this_class, $sub) => $caller_class);
+sub __hasattr__ {
+    my ($self, $attribute) = @_;
+
+    my $is_finalized = $REGISTRY->is_finalized($self);
+    my $isa_cache    = $REGISTRY->get_isa_cache_for($self);
+    if ($is_finalized && $isa_cache) {
+        return defined $isa_cache->{$attribute} ? $ATTR_EXISTS_CACHED
+            : $ATTR_NO_SUCH_ATTR;
     }
 
-    return;
+    my $property_meta = $self->__metaclass__->property;
+    return $property_meta->traverse_isa_for_property($self, $attribute)
+        ? $ATTR_EXISTS
+        : $ATTR_NO_SUCH_ATTR;
 }
 
-sub install_sub_from_class {
-    my ($pkg_from, $sub_name, $pkg_to) = @_;
-    my $from = join q{::}, ($pkg_from, $sub_name);
-    my $to   = join q{::}, ($pkg_to,   $sub_name);
+sub __setattr__ {
+    my ($self, $attribute, $value) = @_;
+    return if not $self->__hasattr__($attribute);
 
-    no strict 'refs'; ## no critic
-    *{$to} = *{$from};
+    $self->{$attribute} = $value;
 
-    return;
+    return 1;
 }
 
-sub install_sub_from_coderef {
-    my ($coderef, $pkg_to, $sub_name) = @_;
-    my $to = join q{::}, ($pkg_to, $sub_name);
+sub __is_finalized__ {
+    my ($self) = @_;
 
-    no strict   'refs';     ## no critic
-    no warnings 'redefine'; ## no critic
-    *{$to} = $coderef;
+    return $REGISTRY->is_finalized($self);
+}
 
-    return;
+sub __finalize__ {
+    my ($self) = @_;
+    return 1 if $self->__is_finalized__;
+    
+    my $metaclass = $self->__metaclass__;
+    my $isa_cache = $metaclass->property->traverse_isa_for_property($self);
+
+    return $REGISTRY->finalize_class($self, $isa_cache);
+}
+
+sub __meta__ {
+    my ($self, $property_name) = @_;
+    
+    my $all_meta = $self->__metaclass__->property->properties_for_class($self);
+
+    return defined $property_name ? $all_meta->{$property_name}
+        : $all_meta
+}
+
+sub __metaclass__ {
+    my ($self) = @_;
+    return $REGISTRY->get_metaclass_for($self);
 }
 
 1;
 
 __END__
 
+
 =begin wikidoc
 
 = NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Object - The default base object for Class::Dot classes.
 
 = VERSION
 
-This document describes MyClass version %%VERSION%%
-
-= SYNOPSIS
-
-    use Class::Dot::Meta::Method;
-
-    # ### Install a method from the current class.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_class
-    );
-
-    # The local method
-    sub meaning_of_life {
-        return 42;
-    }
-    
-    sub import_my_method {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
-
-        install_sub_from_class(
-            ($this_class, 'meaning_of_life') => $caller_class
-        );
-
-        return;
-    }
-
-    
-    # ### Install a method by code reference.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_coderef
-    );
-   
-    sub import_my_methodref {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
-
-        my $the_sub = sub {
-            return 42;
-        };
-
-        install_sub_from_coderef(
-            $the_sub => ($caller_class, 'meaning_of_life');
-        }
-
-        return;
-    }
-            
-    
+This document describes {Class::Dot} version %%VERSION%%
 
 = DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This is the default base class for [Class::Dot] classes. You don't have to
+inherit from this class manually, it is done automaticly when you import
+{Class::Dot} in your class.
+
+Actually it is a bit more complex than that, it is the base class for
+{Class::Dot}'s default metaclass, [Class::Dot::Meta::Class].
+You can extend it's functionality by subclassing {Class::Dot::Meta::Class}
+and then set that subclass as the metaclass with the {-metaclass} option,
+via there you can decide which base class you want.
+
+This class contain useful methods for introspection on your class's
+attributes, metaclass and so on.
+
+Notice how this base class has no constructor or destructor, these are built
+dynamicly by the metaclass.
 
 = SUBROUTINES/METHODS
 
-== CLASS METHODS
+== INSTANCE METHODS
 
-=== {install_sub_from_class(($class_from, $method_name) => $class_to)}
+=== {__hasattr__($attribute_name)}
 
-Installs a method from a class into another class.
+Returns true if the class has the attribute {$attribute_name}.
 
-=== {install_sub_from_coderef($coderef => ($class_to, $method_name))};
+=== {__getattr__($attribute_name)}
 
-Installs a code reference in a class as a method.
+Get the value of an attribute.
+
+=== {__setattr__($attribute_name, $value)}
+
+Set the value of an attribute.
+
+*NOTE* This will not check if the value conforms to the type constraint
+even if the {-constrained} option is set. To do this dynamically you have to
+do it like this:
+
+    my $set_attr = $self->__meta__($attribute)->setter_name();
+    $self->$set_attr($value);
+
+=== {__meta__($attribute_name})
+
+Return attribute metadata for an attribute by it's name.
+This will return the attribute's type instance. See [Class::Dot::Type]
+for the methods available.
+
+=== {__metaclass__}
+
+Return the instance of the metaclass for this class.
+
+=== {__is_finalized__()}
+
+Returns true if this class is finalized.
+
+=== {__finalize__()}
+
+Finalize the class.
 
 = DIAGNOSTICS
 
@@ -164,7 +186,11 @@ web interface at [CPAN Bug tracker|http://rt.cpan.org].
 
 = SEE ALSO
 
+== [Class::Dot::Manual]
+
 == [Class::Dot]
+
+== [Class::Dot::Type]
 
 = AUTHOR
 
@@ -233,3 +259,4 @@ POSSIBILITY OF SUCH DAMAGES.
 #   fill-column: 78
 # End:
 # vim: expandtab tabstop=4 shiftwidth=4 shiftround
+

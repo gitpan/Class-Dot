@@ -4,80 +4,116 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Meta::Accessor::Overrideable - The default accessor type
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_10
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Meta::Method;
- 
-     # ### Install a method from the current class.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_class
-     );
- 
-     # The local method
-     sub meaning_of_life {
-         return 42;
-     }
- 
-     sub import_my_method {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         install_sub_from_class(
-             ($this_class, 'meaning_of_life') => $caller_class
-         );
- 
-         return;
-     }
- 
- 
-     # ### Install a method by code reference.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_coderef
-     );
- 
-     sub import_my_methodref {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         my $the_sub = sub {
-             return 42;
-         };
- 
-         install_sub_from_coderef(
-             $the_sub => ($caller_class, 'meaning_of_life');
-         }
- 
-         return;
-     }
+See L<Class::Dot::Meta::Accessor> for usage information.
 
 =head1 DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+These are the default accessors when no C<<< -accessor_type >>> option is set. They
+are called C<<< Overrideable >>> because they are easily overrided when the
+C<<< -override >>> option is set.
+
+To override a semi-affordance attribute just do this:
+
+     use Class::Dot2 qw(-override);
+ 
+     property name => (isa => 'Str', default => 'George Louis Constanza');
+ 
+     sub name {
+         my ($self) = @_;
+ 
+         my $name   = $self->__getattr__('name');
+         carp "Someone requested the name of: $name ($self)";
+ 
+         return $name;
+     }
+ 
+     sub set_name {
+         my ($self, $new_name) = @_;
+ 
+         my $name = $self->__getattr__('name');
+         carp "Someone changed $name's name to $new_name ($self)";
+         $self->__setattr__('name', $new_name);
+ 
+         return;
+     }
+
+If you define your property in a C<<< BEGIN >>>, C<<< INIT >>> or C<<< CHECK >>> block, however,
+you have to do it a bit differently:
+
+     BEGIN {
+         use Class::Dot2 qw(-override);
+         property name => (isa => 'Str', default => 'George Louis Constanza');
+ 
+         after_property_get name => sub {
+             my ($self) = @_;
+ 
+             my $name   = $self->__getattr__('name');
+             carp "Someone requested the name of: $name ($self)";
+ 
+             return $name;
+         }; # << NOTE: the semicolon is required
+ 
+         after_property_set set_name => {
+             my ($self, $new_name) = @_;
+ 
+             my $name = $self->__getattr__('name');
+             carp "Someone changed $name's name to $new_name ($self)";
+             $self->__setattr__('name', $new_name);
+ 
+             return;
+         }; # << NOTE: the semicolon is required
 
 =head1 SUBROUTINESE<sol>METHODS
 
-=head2 CLASS METHODS
+=head2 INSTANCE METHODS
 
-=head3 C<<< install_sub_from_class(($class_from, $method_name) => $class_to) >>>
+=head3 C<<< create_get_accessor($caller_class, $attribute_name, $attribute_type, $options, $privacy_settings) >>>
 
-Installs a method from a class into another class.
+The prototype for this function is defined in L<Class::Dot::Meta::Accessor::Base>
+and this overridden method behaves accordingly.
 
-=head3 C<<< install_sub_from_coderef($coderef => ($class_to, $method_name)) >>>;
+=head3 C<<< create_set_accessor($caller_class, $attribute_name, $attribute_type, $options, $privacy_settings) >>>
 
-Installs a code reference in a class as a method.
+The prototype for this function is defined in L<Class::Dot::Meta::Accessor::Base>
+and this overridden method behaves accordingly.
+
+=head3 C<<< create_mutator($caller_class, $attribute_name, $attribute_type, $options, $privacy_settings) >>>
+
+The prototype for this function is defined in L<Class::Dot::Meta::Accessor::Base>
+and this overridden method behaves accordingly.
+
+=head2 PRIVATE CLASS METHODS
+
+=head3 C<<< register_plugin() >>>
+
+Private metadata for L<Class::Plugin::Util>.
 
 =head1 DIAGNOSTICS
 
-This class has no error messages.
+=head2 C<<< You tried to set a value with %s(). Did you mean %s() ? >>>
+
+You tried to set a value via an accessor that is a get accessor, not a
+mutator. You should probably follow the error message advice.
+
+=head2 C<<< Can't set value with %s(). It's private! >>>
+
+The attribute you tried to set is C<<< private >>> and can't be set like this,
+if you feel otherwise, declare it as C<<< public >>>, or set the value via
+C<<< $self->__setattr__($attribute_name, $value) >>>.
+
+=head2 C<<< Can only set value with %s(), it's write only! >>>
+
+You tried to get the value from a C<<< writeonly >>> attribute. If you feel the
+attribute shouldn't be C<<< writeonly >>> you should declare it as public, or you can
+get the value via C<<< $self->__getattr__($attribute_name) >>>.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -107,7 +143,13 @@ web interface at L<CPAN Bug tracker|http://rt.cpan.org>.
 
 =head1 SEE ALSO
 
+=head2 L<Class::Dot::Accessor>
+
+=head2 L<Class::Dot::Accessor::Base>
+
 =head2 L<Class::Dot>
+
+=head2 L<Class::Dot::Manual>
 
 =head1 AUTHOR
 

@@ -4,86 +4,59 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Policy::Mutator - Always create mutators.
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_10
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Meta::Method;
+     use Class::Dot::Policy::Mutator;
  
-     # ### Install a method from the current class.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_class
-     );
- 
-     # The local method
-     sub meaning_of_life {
-         return 42;
-     }
- 
-     sub import_my_method {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         install_sub_from_class(
-             ($this_class, 'meaning_of_life') => $caller_class
-         );
- 
-         return;
-     }
- 
- 
-     # ### Install a method by code reference.
- 
-     use Class::Dot::Meta::Method qw(
-         install_sub_from_coderef
-     );
- 
-     sub import_my_methodref {
-         my ($this_class) = @_;
-         my $caller_class = caller 0;
- 
-         my $the_sub = sub {
-             return 42;
-         };
- 
-         install_sub_from_coderef(
-             $the_sub => ($caller_class, 'meaning_of_life');
-         }
- 
-         return;
-     }
+     # is the same as:
+     # use Class::Dot2 qw(-getter_prefix= -setter_prefix=)   
 
 =head1 DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This is a L<Class::Dot> policy that can be used instead of C<<< Class::Dot >>> to
+always enable some options.
+
+This policy creates mutator accessors by default.
+
+So if you have the attribute C<<< foo >>>:
+
+     property foo => (isa => 'Str');
+
+It will have the mutator method C<<< foo >>>:
+
+     # Get foo's value
+     my $value = $self->foo();
+ 
+     # Set foo's value.
+     $self->foo($value);
 
 =head1 SUBROUTINESE<sol>METHODS
 
-=head2 CLASS METHODS
-
-=head3 C<<< install_sub_from_class(($class_from, $method_name) => $class_to) >>>
-
-Installs a method from a class into another class.
-
-=head3 C<<< install_sub_from_coderef($coderef => ($class_to, $method_name)) >>>;
-
-Installs a code reference in a class as a method.
+See L<Class::Dot>. 
 
 =head1 DIAGNOSTICS
 
-This class has no error messages.
+No error messages.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
 This module requires no configuration file or environment variables.
 
 =head1 DEPENDENCIES
+
+=over
+
+=item *
+
+L<Class::Dot>
+
+=back
 
 =over
 

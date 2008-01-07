@@ -11,21 +11,32 @@ use warnings;
 use version qw(qv);
 use 5.006000;
 
+our $VERSION   = qv('2.0.0_10');
+our $AUTHORITY = 'cpan:ASKSH';
+
 # Set to true if Class::Dot::XS loads OK.
 use vars qw($XSokay); ## no critic
 
-use Carp                qw(carp croak);
+use Carp                qw(carp croak confess);
 use Scalar::Util        qw(blessed);
 use Class::Plugin::Util qw(require_class);
 use English             qw(-no_match_vars);
+use Params::Util        qw(_HASHLIKE);
 
-use DotX;
+use Class::Dot::Typemap            qw(:std);
 
-use Class::Dot::Types            qw(:std);
+# The global registry.
+use Class::Dot::Registry;
+our $REGISTRY = Class::Dot::Registry->new();
+
 use Class::Dot::Meta::Method     qw(
     install_sub_from_class
     install_sub_from_coderef
 );
+use Class::Dot::Meta::Type       qw(
+    _NEWSCHOOL_TYPE _OLDSCHOOL_TYPE
+);
+
 use Class::Dot::Devel::Sub::Name qw(subname);
 
 # Try to load the Class::Dot::XS speed-up module.
@@ -37,36 +48,39 @@ use Class::Dot::Devel::Sub::Name qw(subname);
     }
 }
 
-# Try to load the mro module available in recent perl's.
-if (!defined $INC{'mro.pm'}) {
-    no warnings 'all';      ## no critic
-    eval 'require mro';     ## no critic
-}
-
-
-our $VERSION   = qv('2.0.0_08');
-our $AUTHORITY = 'cpan:ASKSH';
-
 my @EXPORT_OK = qw(
     property after_property_set after_property_get
     extends composite has
 );
 
-push @EXPORT_OK, @Class::Dot::Types::STD_TYPES;
-
-my $INTERNAL_ATTR_NOISE = '__x__';
-my $ATTR_EXISTS         = 1;
-my $ATTR_EXISTS_CACHED  = 2;
+push @EXPORT_OK, @Class::Dot::Typemap::STD_TYPES;
 
 my %EXPORT_CLASS = (
     ':std'  => [@EXPORT_OK],
-    ':new'  => [@EXPORT_OK, qw(-new)]
+    ':new'  => [@EXPORT_OK, qw(-new)],
+    ':fast' => [@EXPORT_OK, qw(-new -optimized)],
 );
 
-our %OPTIONS_FOR     = ( );
-our %PROPERTIES_FOR  = ( );
-our %IS_FINALIZED    = ( );
-our %ISA_CACHE_FOR   = ( );
+# The list of allowed option tags.
+my %ALLOWED_CLASS_OPTIONS = map { $_ => 1 } qw(
+    -new
+    -rebuild
+    -getter_prefix
+    -setter_prefix
+    -accessor_type
+    -metaclass
+    -constrained
+    -chained
+    -optimized
+    -override
+);
+
+my %DEFAULT_OPTIONS = (
+    '-getter_prefix' => q{},
+    '-setter_prefix' => 'set_',
+    '-metaclass'     => 'Class::Dot::Meta::Class',
+    '-override'      => undef,
+);
 
 sub import { ## no critic
     my ($this_class, @args) = @_;
@@ -74,6 +88,24 @@ sub import { ## no critic
 
     strict->import();
     warnings->import();
+
+    return $this_class->_dotify_class($caller_class, @args);
+}
+
+sub _create_policy {
+    my ($this_class, $push_policy_ref, @args) = @_;
+
+    my %mapped_args = map { $_ => 1 } @args;
+    for my $push_policy (@{ $push_policy_ref }) {
+        $mapped_args{$push_policy} = 1;
+    }
+    @args = keys %mapped_args;
+
+    return @args;
+}
+
+sub _dotify_class {
+    my ($this_class, $caller_class, @args) = @_;
 
     my $export_class;
     my @subs;
@@ -95,11 +127,20 @@ sub import { ## no critic
         ? (@{ $EXPORT_CLASS{$export_class} }, @subs)
         : @subs;
 
-    $OPTIONS_FOR{$caller_class} = { };
-    my $options = $OPTIONS_FOR{$caller_class};
+    my $options = $REGISTRY->get_options_for(
+        $caller_class, \%DEFAULT_OPTIONS
+    );
     for my $sub_to_export (@subs_to_export) {
         if ($sub_to_export =~ m/^-/xms) {
-            $OPTIONS_FOR{$caller_class}{$sub_to_export} = 1;
+            my $option = $sub_to_export;
+            my $value = 1;
+            # Can set values on the use-line with '=' assignment.
+            if ($option =~ m/=/xms) {
+                ($option, $value) = split m/=/xms, $option, 2;
+            }
+            croak __PACKAGE__.": Unknown class option: [$option]"
+                if not exists $ALLOWED_CLASS_OPTIONS{$option};
+            $options->{$option} = $value;
         }
         else {
             install_sub_from_class($this_class,
@@ -108,410 +149,119 @@ sub import { ## no critic
         }
     }
 
-    my %INSTALL_METHOD = (
-        DESTROY             => _create_destroy_method($caller_class),
-        __hasattr__         => _create_hasattr($caller_class),
-        __getattr__         => _create_getattr($caller_class),
-        __setattr__         => _create_setattr($caller_class),
-        __finalize__        => _create_finalize($caller_class),
-        __is_finalized__    => _create_is_finalized($caller_class),
-        __meta__            => _create_meta($caller_class),
+    # ### Register the class.
+    $REGISTRY->register_class($caller_class);
+
+    # ### Initialize metaclass for this class.
+    if (! $options->{'-new'}) {
+        $options->{'-no_constructor'} = 1;
+    }
+
+    my $metaclass = $REGISTRY->init_metaclass_for(
+        $caller_class, $options->{'-metaclass'}, $options
     );
-    if ($options->{'-new'}) {
-        $INSTALL_METHOD{'new'} = _create_constructor($caller_class);
-    }
-
-    while (my ($method_name, $method_ref) = each %INSTALL_METHOD) {
-        install_sub_from_coderef(
-            $method_ref => $caller_class, $method_name
-        );
-    }
-
-    $PROPERTIES_FOR{$caller_class} = {};
 
     return;
 }
 
-sub _create_setattr {
-	my ($caller_class) = @_;
-	my $options = $OPTIONS_FOR{$caller_class};
-
-	return subname "${caller_class}::__setattr__" => sub {
-		my ($self, $attribute, $value) = @_;
-		return if not $self->__hasattr__($attribute);
-        my $property_key
-            = $INTERNAL_ATTR_NOISE . $attribute .  $INTERNAL_ATTR_NOISE;
-		$self->{$property_key} = $value;
-		return 1;
-	}
-}
-
-sub _create_getattr {
-	my ($caller_class) = @_;
-
-	return subname "${caller_class}::__getattr__" => sub {
-		my ($self, $attribute) = @_;
-        my $property_key
-            = $INTERNAL_ATTR_NOISE . $attribute .  $INTERNAL_ATTR_NOISE;
-		return $self->{$property_key};
-	}
-}
-
-sub _create_is_finalized {
-    my ($caller_class) = @_;
-
-    return subname "${caller_class}::__is_finalized__" => sub {
-        my ($self) = @_;
-
-        return $IS_FINALIZED{$caller_class} ? 1 : 0;
-    }
-}
-
-sub _create_meta {
-    my ($caller_class) = @_;
-
-    return subname "${caller_class}::__meta__" => sub {
-        my ($self, $property_name) = @_;
-        my $class  = ref $self ? ref $self
-            : $self;
-        my $propz  = Class::Dot->properties_for_class($class);
-
-        return $propz->{$property_name};
-    }
-}
-
-sub _create_finalize {
-    my ($caller_class) = @_;
-
-    return subname "${caller_class}::__finalized__" => sub {
-        my ($self) = @_;
-        my $class = ref $self ? ref $self
-            : $self;
-        return finalize_class($class);
-    }
-}
-
 sub finalize_class {
     my ($opt_class) = @_;
-    my $class = defined $opt_class ? $opt_class
+    my $class = $opt_class ? $opt_class
         : caller 0;
+    my $metaclass = $REGISTRY->get_metaclass_for($class);
 
-    return 1 if $IS_FINALIZED{$class};
+    my $isa_cache =
+        $metaclass->property->traverse_isa_for_property($class);
 
-    $ISA_CACHE_FOR{$class} = _traverse_isa_for_property($class);
-
-    $IS_FINALIZED{$class} = 1;
-    return 1;
-}
-
-sub _get_linear_isa_pureperl_rec {
-    my ($class) = @_;
-
-    no strict 'refs'; ## no critic
-    my @isa = @{ "$class\::ISA" };
-
-    my @final;
-    my %stored;
-    ISA:
-    for my $isa (@isa) {
-        next ISA if exists $stored{$isa};
-        $stored{$isa} = 1;
-        my $sub_isa = _get_linear_isa_pureperl_rec($isa);
-        next ISA if not defined $sub_isa;
-        next ISA if not ref $sub_isa;
-        next ISA if not ref $sub_isa eq 'ARRAY';
-        push @final, @{ $sub_isa };
-    }
-
-    unshift @final, $class;
-
-    return \@final;
-}
-
-sub _get_linear_isa_pureperl {
-    my ($class) = @_;
-
-    my @stream = $class;
-    my @final;
-    my %seen;
-
-    no strict 'refs'; ## no critic
-    STREAM:
-    while (defined (my $atom = shift @stream)) {
-
-        my @isa = @{ "$atom\::ISA" };
-        my @keep;
-        ISA:
-        for my $isa_class (@isa) {
-            next ISA if exists $seen{$isa_class};
-            $seen{$isa_class} = 1;
-            push @final, $isa_class;
-            push @stream, $isa_class;
-        }
-
-        #push @final, @isa;
-        #push @stream, @isa;
-
-    }
-
-    unshift @final, $class;
-    return \@final;
-}
-
-sub _traverse_isa_for_property {
-    my ($class, $attr) = @_;
-
-    my $has_property;
-    my $all_properties = { };
-
-    my $isa;
-    GETISA: {
-        no strict   'refs';   ## no critic
-        no warnings 'once';   ## no critic
-        $isa = defined $mro::VERSION ? mro::get_linear_isa($class)
-            : _get_linear_isa_pureperl($class);
-    }
-
-    if (scalar @{ $isa } > 1) {
-        ISA:
-        for my $isa (@{ $isa }) {
-            if (defined $attr) {
-                if ($PROPERTIES_FOR{$isa}
-                    && exists $PROPERTIES_FOR{$isa}{$attr}) {
-                    $has_property = $PROPERTIES_FOR{$isa}{$attr};
-                    last ISA;
-                }
-            }
-            else {
-                PROPERTY:
-                while (my ($name, $val) = each %{ $PROPERTIES_FOR{$isa} }) {
-                    # we always use the first property we get, since that
-                    # matches the method resolution order, so we skip the
-                    # property if we already have it.
-                    if (!exists $all_properties->{$name}) {
-                        $all_properties->{$name} = $val;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        if (defined $attr) {
-            $has_property = exists $PROPERTIES_FOR{$class}{$attr};
-        }
-        else {
-            $all_properties = {%{ $PROPERTIES_FOR{$class} }};
-        }
-    }
-
-    return defined $attr ? $has_property
-        : $all_properties;
-}
-
-sub _create_hasattr {
-	my ($caller_class) = @_;
-
-    # For some reason, perlcritic thinks 'return sub {)'
-    # is ProhibitMixedBooleanOperators, so need no critic here.
-	return subname "${caller_class}::__hasattr__" => sub { ## no critic
-		my ($self, $attribute) = @_;
-        my $class = ref $self ? ref $self
-            : $self;
-
-        if ($IS_FINALIZED{$class} && exists $ISA_CACHE_FOR{$class}) {
-            return $ATTR_EXISTS_CACHED
-                if defined $ISA_CACHE_FOR{$class}{$attribute};
-            return;
-        }
-            
-		return if not _traverse_isa_for_property($class, $attribute);
-		return $ATTR_EXISTS;
-	}
-}
-
-sub _create_constructor {
-    my ($caller_class) = @_;
-    my $options = $OPTIONS_FOR{$caller_class};
-
-    return subname "${caller_class}::new" => sub { ## no critic
-        my ($class, $options_ref) = @_;
-
-        if (!defined $options_ref || not ref $options_ref eq 'HASH') {
-            $options_ref = { };
-        }
-
-        my $self = bless { }, $class;
-
-        OPTION:
-        while (my ($opt_key, $opt_value) = each %{$options_ref}) {
-            $self->__setattr__($opt_key, $opt_value);
-        }
-
-        if ($self->can('BUILD')) {
-            my $ret = $self->BUILD($options_ref); 
-            if ($options->{'-rebuild'}) {
-                if (ref $ret) {
-                    $self = $ret;
-                }
-            }
-        }
-
-        return $self;
-        }
+    return $REGISTRY->finalize_class($class, $isa_cache);
 }
 
 sub properties_for_class {
     my ($self, $class) = @_;
-    $class = ref $class ? ref $class
-        : $class;
-
-    if (exists $ISA_CACHE_FOR{$class}) {
-        if ($ENV{TESTING_CLASS_DOT}) {
-            $ISA_CACHE_FOR{$class}{__is_retrieved_cached__}++;
-        }
-        return $ISA_CACHE_FOR{$class};
-    }
-
-    return _traverse_isa_for_property($class);
-}
-
-sub _create_destroy_method {
-    my ($caller_class) = @_;
-
-    return subname "${caller_class}::DESTROY" => sub {
-        my ($self) = @_;
-
-        if ($self->can('DEMOLISH')) {
-            $self->DEMOLISH();
-        }
-
-        return;
-    }
+    my $metaclass = $REGISTRY->get_metaclass_for($class);
+    
+    return $metaclass->property->properties_for_class($class);
 }
 
 sub property (@) { ## no critic
-    my ($property, $isa) = @_;
-    return if not $property;
+    my ($property, @args) = @_;
+    confess 'All properties needs a name!'
+        if not defined $property;
 
-    my $caller_class = caller 0;
+    my $isa;
 
-    return define_property($property, $isa => $caller_class);
-}
+    # Decide what kind of args this is.
+    # If it's a newschool type or it's only one arg it is
+    # taken as the property's type.
+    if (_NEWSCHOOL_TYPE($args[0]) || scalar @args == 1) {
+        $isa = shift @args;
+    }
 
-sub has ($;%) { ## no critic
-    my ($name, %opts) = @_;
-    my $caller_class  = caller 0;
+    my %options;
+    if (not scalar @args % 2) { # is even number.
+        %options = @args;
+    }
+    elsif (_HASHLIKE($args[-1])) {
+        %options    = %{$args[-1]};
+    }
 
-
-    my $is      = exists $opts{is} ? $opts{is} : 'rw';
-    my $type    = $opts{isa};
-    my $default = $opts{default};
-    if (defined $type) {
-        if (exists  $Class::Dot::Types::__TYPEDICT__{$type}) { ## no critic
-            $type = $Class::Dot::Types::__TYPEDICT__{$type}->($default); ## no critic
-        }
-        else {
-            croak "Unknown type constraint: $type";
+    if (defined $options{isa}) {
+        $isa        = $options{isa};
+        my $default = $options{default};
+        if ($isa) {
+            my $type_init = Class::Dot::Typemap->get_type($isa);
+            confess "Unknown type constraint: $isa" if not $type_init;
+            $isa = $type_init->($default);
         }
     }
 
-    return define_property($name, $type => $caller_class);
+    # Support Moose {is =>} syntax.
+    $options{privacy} ||= $options{is};
+
+    # Get privacy option
+    if ($property =~ s/^-//xms) {
+        $options{privacy}  = 'private';
+    }
+
+    my $caller_class = caller 0;
+    my $metaclass    = $REGISTRY->get_metaclass_for($caller_class);
+
+    return $metaclass->property->define_property(
+        $property, $isa => $caller_class, {
+            %options,
+        }
+    );
+}
+
+sub has ($;%) { ## no critic
+    goto &property;
 }
 
 sub extends (@;) { ## no critic
     my (@superclasses) = @_;
     my $inheritor      = caller 0;
+    my $meta_class     = $REGISTRY->get_metaclass_for($inheritor);
 
-    return superclasses_for($inheritor => @superclasses);
+    return $meta_class->superclasses_for(
+        $inheritor => @superclasses
+    );
 }
 
 sub composite (@;) { ## no critic
     my ($name, $class) = @_;
     my $caller_class   = caller 0;
+    my $metaclass      = $REGISTRY->get_metaclass_for($caller_class);
 
-    return composites_for($caller_class, $name, $class);
+    return $metaclass->property->composites_for($caller_class, $name, $class);
 };
-
-sub composites_for {
-    my ($class, $name, $composite) = @_;
-   
-    if (!require_class($composite)) {
-        croak "Couldn't load composite class '$composite'\n";
-    }
-
-    return define_property($name, isa_Object($composite, auto => 1) => $class);
-}
-
-
-sub superclasses_for {
-    my ($inheritor, @superclasses) = @_;
-    my @final_isa;
-
-    no strict 'refs'; ## no critic
-
-    SUPERCLASS:
-    for my $base (@superclasses) {
-        if ($inheritor eq $base) {
-            carp "Class '$inheritor' tried to inherit from itself.";
-            next SUPERCLASS;
-        }
-
-        next SUPERCLASS if $inheritor->isa($base);
-
-        if (!require_class($base)) {
-            croak "Couldn't load base class '$base'\n";
-        }
-
-        push @final_isa, $base;
-    }
-
-    # Setting all base classes as one is an optimization
-    # over pushing them one for one, atleast in perl > 5.9.5.
-    # see `perldoc mro` for more information.
-    @{ "$inheritor\::ISA" } = @final_isa;
-
-    return;
-}
-
-sub define_property {
-    my ($property, $isa, $caller_class) = @_;
-    my $set_property = "set_$property";
-
-    # Keep preceeding _'s. E.g __private becomes __set_private
-    # instead of set__private.
-    if ($property =~ /^(_+)/xms) {
-        my $uscores   =  $1;
-        $set_property =  $property;
-        $set_property =~ s/^_+//xms;
-        $set_property = $uscores . 'set' . q{_} . $set_property;
-    }
-
-    no strict 'refs'; ## no critic
-    if (not *{ $caller_class . "::$property" }{CODE}) {
-        my $get_accessor = _create_get_accessor($caller_class, $property, $isa);
-        install_sub_from_coderef($get_accessor => $caller_class, $property);
-    }
-
-    if (not *{ $caller_class . "::$set_property" }{CODE}) {
-        my $set_accessor = _create_set_accessor($caller_class, $property, $isa);
-        install_sub_from_coderef($set_accessor => $caller_class, $set_property);
-    }
-
-    if (_NEWSCHOOL_TYPE($isa)) {
-        $isa->{getter_name} = $property;
-        $isa->{setter_name} = $set_property;
-    }
-
-    $PROPERTIES_FOR{$caller_class}->{$property} = $isa;
-
-    return;
-}
 
 sub after_property_get (@&) { ## no critic
     my ($property, $func_ref) = @_;
     my $caller_class = caller;
 
-    install_sub_from_coderef($func_ref => $caller_class, $property);
+    my $class_meta  = $REGISTRY->get_meta_for($caller_class);
+    my $getter_name = $class_meta->{$property}->getter_name();
+    install_sub_from_coderef($func_ref => $caller_class, $getter_name);
 
     return;
 }
@@ -519,103 +269,12 @@ sub after_property_get (@&) { ## no critic
 sub after_property_set (@&) { ## no critic
     my ($property, $func_ref) = @_;
     my $caller_class = caller;
-    my $set_property = "set_$property";
 
-    install_sub_from_coderef($func_ref => $caller_class, $set_property);
+    my $class_meta  = $REGISTRY->get_meta_for($caller_class);
+    my $setter_name = $class_meta->{$property}->setter_name();
+    install_sub_from_coderef($func_ref => $caller_class, $setter_name);
 
     return;
-}
-
-sub _create_get_accessor {
-    my ($caller_class, $property, $isa) = @_;
-    my $options = $OPTIONS_FOR{$caller_class};
-    my $property_key
-        = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
-
-    if ($options->{'-chained'}) {
-        return subname "${caller_class}::$property" => sub {
-            my ($self, $key) = shift;
-            if (@_) {
-                my $set_property = "set_$property";
-                $self->$set_property($_[0]);
-                return $self;
-            }
-            if (!exists $self->{$property_key}) {
-                if (_NEWSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = $isa->default_value(); #${ $isa }->(); # CLASS $isa->default_value();
-                }
-                elsif (_OLDSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = $isa->($self);
-                }
-                else {
-                    $self->{$property_key} = $isa;
-                }
-            }
-    
-            return $self->{$property_key};
-        };
-    }
-    else {
-        return subname "${caller_class}::$property" => sub {
-            my $self = shift;
-
-            if (@_) {
-                require Carp;
-                Carp::croak("You tried to set a value with $property(). Did "
-                        ."you mean set_$property() ?");
-            }
-
-            if (!exists $self->{$property_key}) {
-                if (_NEWSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = $isa->default_value(); #${ $isa }->(); # CLASS $isa->default_value();
-                }
-                elsif (_OLDSCHOOL_TYPE($isa)) {
-                    $self->{$property_key} = $isa->($self);
-                }
-                else {
-                    $self->{$property_key} = $isa;
-                }
-            }
-    
-            return $self->{$property_key};
-        };
-    }
-}
-
-sub _NEWSCHOOL_TYPE {
-    my ($type_var) = @_;
-    return if not blessed $type_var;
-    return if not $type_var->isa('DotX');
-    return 1;
-}
-
-sub _OLDSCHOOL_TYPE {
-    my ($type_var) = @_;
-    return if not ref $type_var eq 'CODE';
-    return 1;
-}
-
-sub _create_set_accessor {
-    my ($caller_class, $property) = @_;
-    my $options = $OPTIONS_FOR{$caller_class};
-    my $property_key
-        = $INTERNAL_ATTR_NOISE . $property .  $INTERNAL_ATTR_NOISE;
-
-    if ($options->{'-chained'}) {
-    
-        return subname "${caller_class}::set_$property" => sub {
-            my ($self, $value ) = @_;
-            $self->{$property_key} = $value;
-            return $self; # <-- this is the chained part.
-        }
-    }
-    else {
-        return subname "${caller_class}::set_$property" => sub  {
-            my ($self, $value) = @_;
-            $self->{$property_key} = $value;
-            return;
-        }
-    }
 }
 
 1;
@@ -713,9 +372,14 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 Simple and fast properties for Perl 5.
 
-* Does not use inheritance.
-* Properties are fully overridable (Even when set using {new({})}).
+* Properties are fully overrideable (Even when set using {new({})}).
+
 * Lets you define types for your properties, like Hash, String, Int, File, Code, Array and so on.
+
+* Supports type constraints.
+
+* Is not here to replace Moose, but can be used as a drop-in replacement for Moose to get
+  better runtime performance. (does only support a small subset of Moose!)
 
 All the types are populated with sane defaults, so you no longer have to
 write code like this:
@@ -842,7 +506,7 @@ be [Moose], it's meant to be simple and fast).
 
 == CLASS METHODS
 
-=== {property($property, $default_value)}
+=== {property($property_name, %options)}
 =for apidoc VOID = Class::Dot::property(string $property, data $default_value)
 
 Example:
@@ -861,7 +525,11 @@ will create the methods:
 
 with default return values -hello world- and -303-.
 
-=== {define_property($property_name, $default_value, $in_class)}
+=== {has($property_name, %options)}
+
+Alias to {property}.
+
+=== {define_property($property_name, $default_value, $in_class, $options)}
 
 Same as {property()} except you define which class to install the property
 in.
@@ -1059,6 +727,36 @@ Please report any bugs or feature requests to
 [bug-class-dot@rt.cpan.org|mailto:bug-class-dot@rt.cpan.org], or through the web interface at
 [CPAN Bug tracker|http://rt.cpan.org].
 
+= BENCHMARK
+
+This is a benchmark to show an example of how {Class::Dot} performs over other
+similar implementations. The source code for the benchmark can be found in
+the {Class::Dot} distributions {devel/dotbench.pl} file.
+
+                          Rate   moose class::dot class::dot-finalized pureperl-OO
+    moose                 1186/s      --       -96%                 -96% -97%
+    class::dot           27624/s   2229%         --                 -12% -28%
+    class::dot-finalized 31546/s   2560%        14%                   -- -18%
+    pureperl-OO          38610/s   3156%        40%                  22%
+
+These are pretty simple programs that just creates an instance and sets+gets
+some properties. Products may perform differently is other scenarios, after
+all it's just a benchmark.
+
+{class::dot-finalized} is the same program but where the class is finalized.
+Finalizing the class is a simple operation, but after the class has been
+finalized you can not add any new properties or base classes.
+
+This is how you do it:
+
+    __PACAKGE__->__finalize__();
+
+Not that this should be done 'after' you have called the {Class::Dot}
+functions you need.
+
+
+--
+
 = SEE ALSO
 
 == [Moose]
@@ -1068,8 +766,37 @@ A complete object system for Perl 5. It is much more complete than
 
 == [Class::Accessor]
 
-Simple and fast implementation of properties. However, I don't like
+== [Class::Accessor::Fast]
+
+Simple generation of accessors (mutators). You can override the accessors
+themselves, but if you use the default constructor, you can't intercept
+the setting of values when you do:
+
+    my $instance = Class->new({
+        name => 'George Louis Constanza',
+    });
+
+To do that you would have to create a new constructor like this:
+
+    sub new {
+        my ($class, $options_ref) = @_;
+
+        my $self = bless { }, $class;
+
+        while (my ($attr_name, $attr_val) = each %{ $options_ref }) {
+            if ($self->can($attr_name)) {
+                $self->$attr_name($attr_val);
+            }
+        }
+
+        return $self;
+    }
+
+Which is a hassle done automatically in {Class::Dot},
+and, on a personal note, I really don't like
 the syntax ({__PACKAGE__->mk_accessors} etc).
+
+[Class::Accessor::Fast] is 'fast' however! 
 
 == [Class::InsideOut]
 

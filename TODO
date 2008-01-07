@@ -1,3 +1,7 @@
-* Implement type constraints.
-* Auto generate types from typemap. (with type constraints above)
-* Implement is => 'rw', 'ro', writeonly etc.
+* Autogenerate unit tests fr the typemap.
+* Constructor should call the set accessor itself instead of __setattr__.
+  (that is when -override-new (?) is on).
+* Create method mixin(@;) for adding mixin classes to the class.
+  (maybe Class::Dot::Object should be a mixin class?)
+
+* Croak if adding property/extends/composite and __is_finalized__

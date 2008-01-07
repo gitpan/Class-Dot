@@ -15,11 +15,15 @@ use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
 
-our $THIS_TEST_HAS_TESTS = 23;
+use Class::Dot::Meta::Class;
+
+our $THIS_TEST_HAS_TESTS = 24;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
 use_ok('TestComplete');
+
+my $metaclass = Class::Dot::Meta::Class->new();
 
 # ### TestComplete::Type1
 my $type1_no1 = TestComplete->new({
@@ -32,6 +36,7 @@ isa_ok($type1_no1, 'TestComplete::Type1');
 isa_ok($type1_no1, 'TestComplete::Base');
 isa_ok($type1_no1, 'TestComplete::AlternateBase');
 isa_ok($type1_no1, 'TestComplete::SubSubBase');
+isa_ok($type1_no1, 'Class::Dot::Object');
 
 is($type1_no1->subsub_base, 'subsub_base', '3rd generation inheritance');
 is($type1_no1->subsub, 'supervalue', '3rd generation inheritance');
@@ -94,7 +99,7 @@ is( $type2_no2->in_type2, 'this property belongs to Type2 instance 2',
 
 ok(! $type2_no2->can('in_type1'), 'type2 no2 cannot in_type1');
 
-ok(! Class::Dot::superclasses_for(
+ok(! $metaclass->superclasses_for(
     'TestComplete::Type2' => 'TestComplete::Base',
     ),
     'Should skip loading of already loaded superclass',

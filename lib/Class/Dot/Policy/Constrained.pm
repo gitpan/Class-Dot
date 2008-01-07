@@ -4,57 +4,35 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-package Class::Dot::Meta::Method;
+package Class::Dot::Policy::Constrained;
 
 use strict;
 use warnings;
 use version;
 use 5.00600;
 
-use Carp qw(croak);
+our $VERSION    = qv('2.0.0_10');
+our $AUTHORITY  = 'cpan:ASKSH';
 
-our $VERSION   = qv('2.0.0_10');
-our $AUTHORITY = 'cpan:ASKSH';
+use Class::Dot ();
 
-my %EXPORT_OK  = map { $_ => 1 } qw(
-    install_sub_from_class
-    install_sub_from_coderef
+my @PUSH_POLICY = qw(
+    :fast
+    -constrained
 );
 
 sub import {
-    my ($this_class, @subs) = @_;
-    my $caller_class = caller 0;
+    my ($this_class, @args) = @_;
+    my $caller_class        = caller 0;
+    
+    strict->import();
+    warnings->import();
 
-    for my $sub (@subs) {
-        if (! exists $EXPORT_OK{$sub}) {
-            croak "$sub is not exported by " . __PACKAGE__;
-        }
-        install_sub_from_class(($this_class, $sub) => $caller_class);
-    }
+    return if $caller_class eq 'main';
 
-    return;
-}
+    my @policy = Class::Dot::->_create_policy(\@PUSH_POLICY, @args);
 
-sub install_sub_from_class {
-    my ($pkg_from, $sub_name, $pkg_to) = @_;
-    my $from = join q{::}, ($pkg_from, $sub_name);
-    my $to   = join q{::}, ($pkg_to,   $sub_name);
-
-    no strict 'refs'; ## no critic
-    *{$to} = *{$from};
-
-    return;
-}
-
-sub install_sub_from_coderef {
-    my ($coderef, $pkg_to, $sub_name) = @_;
-    my $to = join q{::}, ($pkg_to, $sub_name);
-
-    no strict   'refs';     ## no critic
-    no warnings 'redefine'; ## no critic
-    *{$to} = $coderef;
-
-    return;
+    return Class::Dot->_dotify_class($caller_class, @policy);
 }
 
 1;
@@ -65,88 +43,42 @@ __END__
 
 = NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Policy::Constrained - Always check type constraints.
 
 = VERSION
 
-This document describes MyClass version %%VERSION%%
+This document describes {Class::Dot} version %%VERSION%%
 
 = SYNOPSIS
 
-    use Class::Dot::Meta::Method;
+   use Class::Dot::Policy::Constrained;
 
-    # ### Install a method from the current class.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_class
-    );
-
-    # The local method
-    sub meaning_of_life {
-        return 42;
-    }
-    
-    sub import_my_method {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
-
-        install_sub_from_class(
-            ($this_class, 'meaning_of_life') => $caller_class
-        );
-
-        return;
-    }
-
-    
-    # ### Install a method by code reference.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_coderef
-    );
-   
-    sub import_my_methodref {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
-
-        my $the_sub = sub {
-            return 42;
-        };
-
-        install_sub_from_coderef(
-            $the_sub => ($caller_class, 'meaning_of_life');
-        }
-
-        return;
-    }
-            
-    
+   # is the same as 
+   # use Class::Dot2 qw(-constrained)
 
 = DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This is a [Class::Dot] policy that can be used instead of {Class::Dot} to
+always enable some options.
+
+This policy will check type constraints for all attributes that has not set
+constraints off whenever a new value is set.
 
 = SUBROUTINES/METHODS
 
-== CLASS METHODS
-
-=== {install_sub_from_class(($class_from, $method_name) => $class_to)}
-
-Installs a method from a class into another class.
-
-=== {install_sub_from_coderef($coderef => ($class_to, $method_name))};
-
-Installs a code reference in a class as a method.
+See [Class::Dot]. 
 
 = DIAGNOSTICS
 
-This class has no error messages.
+No error messages.
 
 = CONFIGURATION AND ENVIRONMENT
 
 This module requires no configuration file or environment variables.
 
 = DEPENDENCIES
+
+* [Class::Dot]
 
 * [version]
 

@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Class::Dot::Types - Functions returning default values for Class::Dot types.
+Class::Dot::Meta::Property - Create and keep track of properties.
 
 =head1 VERSION
 
@@ -12,9 +12,9 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Types qw(:std);
+     use Class::Dot::Typemap qw(:std);
  
-     use Class::Dot::Types qw( isa_String isa_Int );
+     use Class::Dot::Typemap qw( isa_String isa_Int );
 
 =head1 DESCRIPTION
 
@@ -160,6 +160,14 @@ POSSIBILITY OF SUCH DAMAGES.
 
 
 =for stopwords vim expandtab shiftround
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround
+__END__
 
 # Local Variables:
 #   mode: cperl

@@ -4,143 +4,116 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-package Class::Dot::Meta::Method;
+package Class::Dot::Meta::Accessor;
 
 use strict;
 use warnings;
 use version;
 use 5.00600;
 
-use Carp qw(croak);
-
 our $VERSION   = qv('2.0.0_10');
 our $AUTHORITY = 'cpan:ASKSH';
 
-my %EXPORT_OK  = map { $_ => 1 } qw(
-    install_sub_from_class
-    install_sub_from_coderef
-);
+use Carp qw(croak);
+use Class::Plugin::Util qw(load_plugins get_plugins);
 
-sub import {
-    my ($this_class, @subs) = @_;
-    my $caller_class = caller 0;
+load_plugins(__PACKAGE__, [qw(Base)]);
 
-    for my $sub (@subs) {
-        if (! exists $EXPORT_OK{$sub}) {
-            croak "$sub is not exported by " . __PACKAGE__;
-        }
-        install_sub_from_class(($this_class, $sub) => $caller_class);
+sub new {
+    my ($class, $options_ref) = @_;
+
+    my $wanted_type = ucfirst lc $options_ref->{type};
+    croak 'Missing accessor type'
+        if not defined $wanted_type;
+
+    my $accessor_classes = get_plugins();
+
+    if (! exists $accessor_classes->{$wanted_type}) {
+        croak "No such accessor type: $wanted_type";
     }
+    
+    my $accessor_class = $accessor_classes->{$wanted_type};
 
-    return;
-}
-
-sub install_sub_from_class {
-    my ($pkg_from, $sub_name, $pkg_to) = @_;
-    my $from = join q{::}, ($pkg_from, $sub_name);
-    my $to   = join q{::}, ($pkg_to,   $sub_name);
-
-    no strict 'refs'; ## no critic
-    *{$to} = *{$from};
-
-    return;
-}
-
-sub install_sub_from_coderef {
-    my ($coderef, $pkg_to, $sub_name) = @_;
-    my $to = join q{::}, ($pkg_to, $sub_name);
-
-    no strict   'refs';     ## no critic
-    no warnings 'redefine'; ## no critic
-    *{$to} = $coderef;
-
-    return;
+    return $accessor_class->new($options_ref);
 }
 
 1;
 
 __END__
 
+
 =begin wikidoc
 
 = NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Meta::Accessor - Automatic generation of accessor methods
 
 = VERSION
 
-This document describes MyClass version %%VERSION%%
+This document describes {Class::Dot} version %%VERSION%%
 
 = SYNOPSIS
 
-    use Class::Dot::Meta::Method;
+    use Class::Dot::Meta::Accessor;
+  
+    my $accessor_gen = Class::Dot::Meta::Accessor->new({
+        type => 'Overrideable'
+    }); 
 
-    # ### Install a method from the current class.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_class
+    my $get_accessor = $accessor_gen->create_get_accessor(
+        $caller_class, $attribute_name, $attribute_type, $options, $privacy
     );
 
-    # The local method
-    sub meaning_of_life {
-        return 42;
-    }
-    
-    sub import_my_method {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
-
-        install_sub_from_class(
-            ($this_class, 'meaning_of_life') => $caller_class
-        );
-
-        return;
-    }
-
-    
-    # ### Install a method by code reference.
-
-    use Class::Dot::Meta::Method qw(
-        install_sub_from_coderef
+    my $set_accessor = $accessor_gen->create_set_accessor(
+        $caller_class, $attribute_name, $attribute_type, $options, $privacy
     );
-   
-    sub import_my_methodref {
-        my ($this_class) = @_;
-        my $caller_class = caller 0;
 
-        my $the_sub = sub {
-            return 42;
-        };
-
-        install_sub_from_coderef(
-            $the_sub => ($caller_class, 'meaning_of_life');
-        }
-
-        return;
-    }
-            
+    my $mutator = $accessor_gen->create_mutator(
+        $caller_class, $attribute_name, $attribute_type, $options, $privacy
+    );
     
 
 = DESCRIPTION
 
-This module does not really contain much. For now it's just a set of utilities
-for exporting methods.
+This class provides automatic generation of accessor methods.
+It is a factory class that delegates the construction to the proper acessor
+type, which is provided with the {new()} constructors {type} option.
+
+Common accessor types include:
+
+* Overrideable
+
+See [Class::Dot::Meta::Accessor::Overrideable]
+
+* Chained
+
+See [Class::Dot::Meta::Accessor::Chained]
+
+* Constrained
+
+See [Class::Dot::Meta::Accessor::Constrained]
+
+
+All accessor types uses the base class [Class::Dot::Accessor::Base], which
+defines their interface.
 
 = SUBROUTINES/METHODS
 
-== CLASS METHODS
+== CLASS CONSTRUCTOR
 
-=== {install_sub_from_class(($class_from, $method_name) => $class_to)}
+=== {new({type => $accessor_type})}
 
-Installs a method from a class into another class.
-
-=== {install_sub_from_coderef($coderef => ($class_to, $method_name))};
-
-Installs a code reference in a class as a method.
+Create a new accessor generator with type {$accessor_type}.
 
 = DIAGNOSTICS
 
-This class has no error messages.
+== {Missing accessor type}
+
+You forgot to provide the accessor type.
+
+== {No such accessor type: %s}
+
+Could not find the class for the accessor type you provided.
 
 = CONFIGURATION AND ENVIRONMENT
 
@@ -149,6 +122,8 @@ This module requires no configuration file or environment variables.
 = DEPENDENCIES
 
 * [version]
+
+* [Class::Plugin::Util]
 
 = INCOMPATIBILITIES
 
@@ -164,7 +139,7 @@ web interface at [CPAN Bug tracker|http://rt.cpan.org].
 
 = SEE ALSO
 
-== [Class::Dot]
+== [Class::Dot::Meta::Accessor::Base]
 
 = AUTHOR
 

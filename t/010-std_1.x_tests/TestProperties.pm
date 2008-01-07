@@ -40,9 +40,14 @@ property regex_def      => isa_Regex(qr{quick\s+brown\s+fox}xms);
 property bool           => isa_Bool(0xfffd); #<< default value of 0xffff should
                                              #   become 1
 
+
+property readonly       => (isa_String('read me'), {privacy => 'private'});
+property readonly2      => (isa_String('we read'), privacy => 'ro');
+property writeonly      => (isa_String('write me'), {privacy => 'writeonly'});
+property writeonly2     => (isa_String('we write'), privacy => 'wo');
+
 composite compoze => 'Composite';
 
-property reglazy        => sub { return "hello lazy!" };
 property blessed        => bless { }, 'Some::XXX::Class';
 
 if ($] >= 5.00800) {

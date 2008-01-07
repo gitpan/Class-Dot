@@ -16,25 +16,33 @@ use lib 'lib';
 use lib $Bin;
 use lib 't';
 use lib "$Bin/../lib";
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(blessed refaddr);
 use TestProperties;
 use Cat;
+use Test::Exception;
 
 $ENV{TESTING_CLASS_DOT} = 1;
 
-our $THIS_TEST_HAS_TESTS = 120;
+our $THIS_TEST_HAS_TESTS = 144;
 
 plan( tests => $THIS_TEST_HAS_TESTS );
 
 use_ok('Class::Dot');
 
-ok(! Class::Dot::property( ), 
-    'property without property'
+dies_ok( sub { ! Class::Dot::property( ) }, 'property without name dies.');
+like($EVAL_ERROR, qr/All properties needs a name!/,
+    '... and we get the error message we expect.'
 );
 
+my $metaclass = Class::Dot::Meta::Class->new();
+ok( $metaclass, 'Create instance of the default metaclass' );
+
 my $testo  = TestProperties->new( );
+isa_ok($testo, 'Class::Dot::Object', 'TestProperties class::dot object');
 my $cat    = Cat->new( );
+isa_ok($cat, 'Class::Dot::Object', 'Cat class::dot object');
 my $testo2 = TestProperties->new({ obj => $cat });
+isa_ok($testo2, 'Class::Dot::Object', 'another TestProperties class::dot object');
 
 my $testo3 = TestProperties->new({ obj => $cat });
 is( $testo3->obj, $cat, 'defaults ok after second instance' );
@@ -74,7 +82,6 @@ is( $testo->compoze->name, 'The quick brown fox jumps over the lazy dog.',
     'Can get/call composited objects properties'
 );
 
-is( $testo->reglazy, 'hello lazy!', 'OLDSCHOOL tyoe');
 isa_ok($testo->blessed, 'Some::XXX::Class', 'no type but blessed object');
 is( $testo->xyzzy, 3.141592, 'isa_Data with default value');
 
@@ -142,6 +149,45 @@ isa_ok( $testo->regex_empty, 'Regexp', 'isa_Regexp default value');
 my $match_against = 'The quick brown fox jumps over the lazy dog.';
 ok( $match_against =~ $testo->regex_def, 'Can match against isa_Regex');
 is( $testo->bool, 1, 'isa_Bool default value of 0xffff becomes 1');
+
+# Test attribute privacy: private / ro
+
+is( $testo->readonly, 'read me' );
+ok(!$testo->can('set_readonly'), 'privacy private has no setter');
+ok(!$testo->__meta__('readonly')->setter_name,
+    'privacy private meta has no setter_name() defined'
+);
+is( $testo->readonly2, 'we read' );
+ok(!$testo->can('set_readonly2'), 'privacy private has no setter');
+ok(!$testo->__meta__('readonly2')->setter_name,
+    'privacy private meta has no setter_name() defined'
+);
+
+# Test attribute privacy: writeonly / wo
+
+is( $testo->__getattr__('writeonly'), 'write me',
+    'privacy wo: can __getattr__'
+);
+$testo->set_writeonly('read me later');
+ok(!$testo->can('writeonly'), 'privacy writeonly has no getter');
+is( $testo->__getattr__('writeonly'), 'read me later',
+    'privacy wo: can set_writeonly'
+);
+ok(!$testo->__meta__('writeonly')->getter_name,
+    'privacy writeonly meta has no setter_name() defined'
+);
+
+is( $testo->__getattr__('writeonly2'), 'we write',
+    'privacy wo: can __getattr__'
+);
+$testo->set_writeonly2('read me later');
+ok(!$testo->can('writeonly2'), 'privacy writeonly has no getter');
+is( $testo->__getattr__('writeonly2'), 'read me later',
+    'privacy wo: can set_writeonly2'
+);
+ok(!$testo->__meta__('writeonly2')->getter_name,
+    'privacy writeonly meta has no setter_name() defined'
+);
 
 my $propz = Class::Dot->properties_for_class($testo);
 my $THIS_BLOCK_HAS_TESTS = 4;
@@ -251,14 +297,14 @@ ok(!$testo->__hasattr__('stringnot'), '__hasattr__ false on nonexisting');
     my $orig_carp = \&Class::Dot::carp;
 
     my $carp_contents;
-    *{ "Class::Dot::carp" } = sub {
+    *{ "Class::Dot::Meta::Class::carp" } = sub {
         $carp_contents = join q{ }, @_;
     };
 
-    Class::Dot::carp('This carp is overridden');
+    Class::Dot::Meta::Class::carp('This carp is overridden');
     is($carp_contents, 'This carp is overridden', 'carp overrideable');
 
-    Class::Dot::superclasses_for('NonExisting' => 'NonExisting');
+    $metaclass->superclasses_for('NonExisting' => 'NonExisting');
     is($carp_contents, "Class 'NonExisting' tried to inherit from itself.", 
         'superclasses_for: Inheriting from yourself yields warnings'
     );
@@ -289,13 +335,13 @@ my $class_methods = {
 };
 my $class_isa;
 my $class_version = 3.141592;
-ok(! Class::Dot::Types::_create_class(
+ok(! $metaclass->create_class(
         $class_name, $class_methods, $class_isa, $class_version
     ),
-    '_create_class'
+    'Class::Dot::Meta::Class::create_class'
 );
-ok(! Class::Dot::Types::_create_class($class_name),
-    '_create_class same class again'
+ok(! $metaclass->create_class($class_name),
+    'create_class same class again'
 );
 is( $class_name->VERSION, $class_version, 'VERSION is set in created class');
 is( $class_name->hello, 'world', 'predefined method is defined');
@@ -315,7 +361,7 @@ my $subclass_methods = {
     },
 };
 my $subclass_isa    = [$class_name];
-Class::Dot::Types::_create_class(
+$metaclass->create_class(
     $subclass_name, $subclass_methods, $subclass_isa
 );
 is( int $subclass_name->VERSION, 1, 'default class version is 1');
@@ -329,22 +375,24 @@ is( $subclass_instance->goodbye, 'universe',
 is( $subclass_instance->{bar}, 'xazzA',
     'subclass is a hash',
 );
-Class::Dot::Types::_create_class(
+$metaclass->create_class(
     'XXX::XXX::XXX::YYYY::YYYY::CCCC', undef, undef, 2.48
 );
 is( sprintf("%.2f", XXX::XXX::XXX::YYYY::YYYY::CCCC->VERSION), 2.48,
     'create class without methods',
 );
 
-eval { Class::Dot::Types->import(':std', ':nonstd') };
+eval { Class::Dot::Typemap->import(':std', ':nonstd') };
 like( $EVAL_ERROR, qr/Only one export class can be used/,
     'C::D::Types: only one export class can be used at a time'
 );
-ok(! Class::Dot::Types->import('ThisSubDoesNotExist'),
+eval { Class::Dot::Typemap->import('ThisSubDoesNotExist') };
+like( $EVAL_ERROR, 
+    qr/There is no ThisSubDoesNotExist for type ThisSubDoesNotExist/,
     'C::D::Types: import nonexisting'
 );
 
-eval { Class::Dot::Types->import(':nonstd') };
+eval { Class::Dot::Typemap->import(':nonstd') };
 ok(! $EVAL_ERROR, 'import nonexisting export class');
 
 
@@ -357,6 +405,20 @@ eval {
 };
 like($EVAL_ERROR, qr/Unknown type constraint/,
     'invalid type for has() croaks'
+);
+
+ok( $testo->can('__metaclass__'), 'the __metaclass_ method is available');
+ok( $testo->__metaclass__, 'the metaclass is defined');
+ok( blessed $testo->__metaclass__, 'the metaclass is a object instance' );
+
+ok( $testo->__metaclass__->can('property'),
+    '__metaclass__ has property object'
+);
+ok( $testo->__metaclass__->property,
+    'the metaclasses property attr is defined'
+);
+ok( blessed $testo->__metaclass__->property,
+    'the metaclasses property attr is an object instance'
 );
 
 

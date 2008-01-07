@@ -4,80 +4,97 @@
 # $HeadURL$
 # $Revision$
 # $Date$
-package Perl::Tags::ClassDot;
+package Class::Dot::Meta::Type;
 
 use strict;
 use warnings;
-use vars qw(@ISA $VERSION);
-use version; $VERSION = qv('2.0.0_10');
+use version;
 use 5.00600;
 
-@ISA = qw(Perl::Tags::Naive); ## no critic
+use Carp qw(croak);
+use Scalar::Util qw(blessed);
 
-use Perl::Tags;
-use Data::Dumper;
-use English qw(-no_match_vars);
-use Perl::Tags::ClassDot::Tag::Property;
+use Class::Dot::Meta::Method qw(install_sub_from_class);
 
-my $RE_PROPERTY = qr{
-    ^\s*
-        property\s*\(?
-            (.+?) (?:\)|\s+|$|;)
-                (?:\=\>\s*(.+))$
-}xms;
+use Class::Dot::Devel::Sub::Name qw(subname);
 
-sub get_parsers {
-   my $self = shift;
-   return (
-      $self->can('property_line'),
-      $self->SUPER::get_parsers()
-   );
+our $VERSION   = qv('2.0.0_10');
+our $AUTHORITY = 'cpan:ASKSH';
+
+my %EXPORT_OK  = map { $_ => 1 } qw(
+    create_type_instance
+    _NEWSCHOOL_TYPE _OLDSCHOOL_TYPE
+);
+
+# All type classes inherits from this.
+my $TYPE_BASE_CLASS = 'Class::Dot::Type';
+
+sub import {
+    my ($this_class, @subs) = @_;
+    my $caller_class = caller 0;
+
+    for my $sub (@subs) {
+        if (! exists $EXPORT_OK{$sub}) {
+            croak "$sub is not exported by " . __PACKAGE__;
+        }
+        install_sub_from_class($this_class, $sub => $caller_class);
+    }
+
+    return;
 }
 
-sub property_line {
+sub _NEWSCHOOL_TYPE {
+    my ($type_var) = @_;
+    return if not blessed $type_var;
+    return if not $type_var->isa($TYPE_BASE_CLASS);
+    return 1;
+}
 
-# has to be put before 'trim' parser, otherwise the comment line will have gone!
-   my ( $self, $line, $statement, $file ) = @_;
+sub _OLDSCHOOL_TYPE {
+    my ($type_var) = @_;
+    return if not ref $type_var eq 'CODE';
+    return 1;
+}
 
-   return if not defined $statement;
-   if ($statement =~ $RE_PROPERTY) {
-      my ($name, $type) = ( q{}, 'isa_Anything' );
-      if (defined $1) {
-        $name = $1;
-      };
-      if (defined $2) {
-        $type = $2;
-      }
+sub create_type_instance {
+    my ($type, $isa, $constraint, $linear_isa_ref) = @_;
+    $constraint = defined $constraint ? $constraint
+        : sub { };
 
-      $type =~ s/^isa_/is /xms;
-      $type =~ s/\;$//xms;
+    my $metaclass = Class::Dot::Meta::Class->new();
 
-      return Perl::Tags::ClassDot::Tag::Property->new(
-         name    => "$name $type",
-         file    => $file,
-         line    => $line,
-         linenum => $INPUT_LINE_NUMBER,
-      );
-   }
-   return;
+    my $full_class_name = $metaclass->subclass_name($TYPE_BASE_CLASS, $type);
+
+    $metaclass->create_class($full_class_name, {
+            default_value   =>
+                (subname "${full_class_name}::default_value" => sub {
+                    my ($self)  = @_;
+                    my $sub_ref = $self->__isa__;
+                    return $sub_ref->();
+            }),
+        },
+        [ $TYPE_BASE_CLASS ],
+    );
+
+    my $type_instance = $full_class_name->new({
+        type        => $type,
+        linear_isa  => $linear_isa_ref,
+        __isa__     => $isa,
+        constraint  => $constraint,
+    });
+
+    return $type_instance;
 }
 
 1;
 
 __END__
 
-# Local Variables:
-#   mode: cperl
-#   cperl-indent-level: 4
-#   fill-column: 78
-# End:
-# vim: expandtab tabstop=4 shiftwidth=4 shiftround
-
 =begin wikidoc
 
 = NAME
 
-Perl::Tags::ClassDot - perltags with support for Class::Dot
+Class::Dot::Meta::Type - Create Class::Dot types dynamically.
 
 = VERSION
 
@@ -85,25 +102,58 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 
-See [Perl::Tags] for more information!
+    use Class::Dot::Typemap qw(:std);
+
+    use Class::Dot::Typemap qw( isa_String isa_Int );
+
 
 = DESCRIPTION
 
-This is a subclass of Perl::Tags that adds tagging of Class::Dot
-properties.
+This module has the available types [Class::Dot] supports.
 
 = SUBROUTINES/METHODS
 
 == CLASS METHODS
 
-=== {property_line()}
+=== {isa_String($default_value)}
+=for apidoc CODEREF = Class::Dot::isa_String(data|CODEREF $default_value)
 
-This [Perl::Tags] parser filter recognizes [Class::Dot] properties
-in Perl source code.
+The property is a string.
 
-=== {get_parsers()}
+=== {isa_Int($default_value)}
+=for apidoc CODEREF = Class::Dot::isa_Int(int $default_value)
 
-See [Perl::Tags] for information about this method.
+The property is a number.
+
+=== {isa_Array(@default_values)}
+=for apidoc CODEREF = Class::Dot::isa_Array(@default_values)
+
+The property is an array.
+
+=== {isa_Hash(%default_values)}
+=for apidoc CODEREF = Class::Dot::isa_Hash(@default_values)
+
+The property is an hash.
+
+=== {isa_Object($kind)}
+=for apidoc CODEREF = Class::Dot::isa_Object(string $kind)
+
+The property is a object.
+(Does not really set a default value.).
+
+=== {isa_Data()}
+=for apidoc CODEREF = Class::Dot::isa_Data($data)
+
+The property is of a not yet defined data type.
+
+=== {isa_Code()}
+=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
+
+The property is a subroutine reference.
+
+=== {isa_File()}
+=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
+
 
 = DIAGNOSTICS
 
@@ -113,7 +163,7 @@ This module requires no configuration file or environment variables.
 
 = DEPENDENCIES
 
-* [Perl::Tags]
+* [version]
 
 = INCOMPATIBILITIES
 
@@ -129,14 +179,11 @@ Please report any bugs or feature requests to
 
 = SEE ALSO
 
-== [Perl::Tags]
-
-This module is a subclass of [Perl::Tags::Naive].
+== [Class::Dot]
 
 = AUTHOR
 
 Ask Solem, [ask@0x61736b.net].
-
 
 = LICENSE AND COPYRIGHT
 
@@ -192,6 +239,14 @@ POSSIBILITY OF SUCH DAMAGES.
 =end wikidoc
 
 =for stopwords vim expandtab shiftround
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround
+__END__
 
 # Local Variables:
 #   mode: cperl
