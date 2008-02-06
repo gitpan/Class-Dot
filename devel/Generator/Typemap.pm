@@ -15,7 +15,7 @@ use Carp    qw(carp croak);
 use English qw(-no_match_vars);
 
 our $AUTHORITY = 'cpan:ASKSH';
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 
 my @ALWAYS_EXPORT = qw(typedef class stdtypes output type alias WRITE_TYPES);
 
@@ -287,7 +287,7 @@ use 5.00600;
 use vars qw(%__TYPEDICT__);
 
 our $AUTHORITY = 'cpan:ASKSH';
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 
 use Carp        qw(confess carp croak);
 

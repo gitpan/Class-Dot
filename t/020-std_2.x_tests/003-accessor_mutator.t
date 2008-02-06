@@ -112,7 +112,7 @@ sub test_mutator_property {
         dies_ok( sub { $obj->$prop("mutate me") },
             "$prop is readonly, so dies if setting value"
         );
-        like( $EVAL_ERROR, qr/Can't set value with $prop\(\). It's private!/,
+        like( $EVAL_ERROR, qr/Can't set value with $prop\(\). It's read only!/,
             '... and got the error message we expected.'
         );
         isnt($obj->$prop, "mutate me", "$prop value was not set");

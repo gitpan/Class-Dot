@@ -19,7 +19,7 @@ use 5.00600;
 use vars qw(%__TYPEDICT__);
 
 our $AUTHORITY = 'cpan:ASKSH';
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 
 use Carp        qw(confess carp croak);
 
@@ -52,93 +52,70 @@ my %EXPORT_CLASS = (
 
 # ------------ ALIASES ------------- #
 our %__TYPEALIASES__ = (
-    'Num' => 'Number',
     'Regex' => 'Regexp',
     'RegexRef' => 'RegexpRef',
-    'FileHandle' => 'File',
+    'Num' => 'Number',
     'Str' => 'String',
+    'FileHandle' => 'File',
+    '...' => 'Any',
 );
 
 # ------------ COMPAT -------------- #
 our %__COMPAT_TYPESUBS__ = (
-       'isa_ScalarRef' => sub  {
-            my $real_sub = $__TYPEDICT__{'ScalarRef'};
-            goto &{ $real_sub };
-        },
-       'isa_Any' => sub  {
-            my $real_sub = $__TYPEDICT__{'Any'};
-            goto &{ $real_sub };
-        },
-       'isa_Regexp' => sub  {
-            my $real_sub = $__TYPEDICT__{'Regexp'};
-            goto &{ $real_sub };
-        },
-       'isa_Item' => sub  {
-            my $real_sub = $__TYPEDICT__{'Item'};
-            goto &{ $real_sub };
-        },
-       'isa_Number' => sub  {
-            my $real_sub = $__TYPEDICT__{'Number'};
-            goto &{ $real_sub };
-        },
-       'isa_Object' => sub  {
-            my $real_sub = $__TYPEDICT__{'Object'};
-            goto &{ $real_sub };
-        },
-       'isa_GlobRef' => sub  {
-            my $real_sub = $__TYPEDICT__{'GlobRef'};
-            goto &{ $real_sub };
-        },
-       'isa_Data' => sub  {
-            my $real_sub = $__TYPEDICT__{'Data'};
-            goto &{ $real_sub };
-        },
-       'isa_ClassName' => sub  {
-            my $real_sub = $__TYPEDICT__{'ClassName'};
-            goto &{ $real_sub };
-        },
-       'isa_Defined' => sub  {
-            my $real_sub = $__TYPEDICT__{'Defined'};
-            goto &{ $real_sub };
-        },
        'isa_Bool' => sub  {
             my $real_sub = $__TYPEDICT__{'Bool'};
-            goto &{ $real_sub };
-        },
-       'isa_Undef' => sub  {
-            my $real_sub = $__TYPEDICT__{'Undef'};
-            goto &{ $real_sub };
-        },
-       'isa_Array' => sub  {
-            my $real_sub = $__TYPEDICT__{'Array'};
-            goto &{ $real_sub };
-        },
-       'isa_Ref' => sub  {
-            my $real_sub = $__TYPEDICT__{'Ref'};
             goto &{ $real_sub };
         },
        'isa_String' => sub  {
             my $real_sub = $__TYPEDICT__{'String'};
             goto &{ $real_sub };
         },
-       'isa_Code' => sub (;&;) {
-            my $real_sub = $__TYPEDICT__{'Code'};
+       'isa_Ref' => sub  {
+            my $real_sub = $__TYPEDICT__{'Ref'};
             goto &{ $real_sub };
         },
-       'isa_CodeRef' => sub  {
-            my $real_sub = $__TYPEDICT__{'CodeRef'};
+       'isa_Number' => sub  {
+            my $real_sub = $__TYPEDICT__{'Number'};
             goto &{ $real_sub };
         },
-       'isa_RegexpRef' => sub  {
-            my $real_sub = $__TYPEDICT__{'RegexpRef'};
+       'isa_Defined' => sub  {
+            my $real_sub = $__TYPEDICT__{'Defined'};
+            goto &{ $real_sub };
+        },
+       'isa_ScalarRef' => sub  {
+            my $real_sub = $__TYPEDICT__{'ScalarRef'};
+            goto &{ $real_sub };
+        },
+       'isa_Object' => sub  {
+            my $real_sub = $__TYPEDICT__{'Object'};
+            goto &{ $real_sub };
+        },
+       'isa_File' => sub  {
+            my $real_sub = $__TYPEDICT__{'File'};
+            goto &{ $real_sub };
+        },
+       'isa_GlobRef' => sub  {
+            my $real_sub = $__TYPEDICT__{'GlobRef'};
+            goto &{ $real_sub };
+        },
+       'isa_Regexp' => sub  {
+            my $real_sub = $__TYPEDICT__{'Regexp'};
+            goto &{ $real_sub };
+        },
+       'isa_Array' => sub  {
+            my $real_sub = $__TYPEDICT__{'Array'};
             goto &{ $real_sub };
         },
        'isa_Value' => sub  {
             my $real_sub = $__TYPEDICT__{'Value'};
             goto &{ $real_sub };
         },
-       'isa_Int' => sub  {
-            my $real_sub = $__TYPEDICT__{'Int'};
+       'isa_Role' => sub  {
+            my $real_sub = $__TYPEDICT__{'Role'};
+            goto &{ $real_sub };
+        },
+       'isa_Item' => sub  {
+            my $real_sub = $__TYPEDICT__{'Item'};
             goto &{ $real_sub };
         },
        'isa_HashRef' => sub  {
@@ -149,261 +126,46 @@ our %__COMPAT_TYPESUBS__ = (
             my $real_sub = $__TYPEDICT__{'ArrayRef'};
             goto &{ $real_sub };
         },
-       'isa_File' => sub  {
-            my $real_sub = $__TYPEDICT__{'File'};
-            goto &{ $real_sub };
-        },
        'isa_Hash' => sub  {
             my $real_sub = $__TYPEDICT__{'Hash'};
             goto &{ $real_sub };
         },
-       'isa_Role' => sub  {
-            my $real_sub = $__TYPEDICT__{'Role'};
+       'isa_Undef' => sub  {
+            my $real_sub = $__TYPEDICT__{'Undef'};
+            goto &{ $real_sub };
+        },
+       'isa_RegexpRef' => sub  {
+            my $real_sub = $__TYPEDICT__{'RegexpRef'};
+            goto &{ $real_sub };
+        },
+       'isa_Int' => sub  {
+            my $real_sub = $__TYPEDICT__{'Int'};
+            goto &{ $real_sub };
+        },
+       'isa_Code' => sub (;&;) {
+            my $real_sub = $__TYPEDICT__{'Code'};
+            goto &{ $real_sub };
+        },
+       'isa_ClassName' => sub  {
+            my $real_sub = $__TYPEDICT__{'ClassName'};
+            goto &{ $real_sub };
+        },
+       'isa_Any' => sub  {
+            my $real_sub = $__TYPEDICT__{'Any'};
+            goto &{ $real_sub };
+        },
+       'isa_CodeRef' => sub  {
+            my $real_sub = $__TYPEDICT__{'CodeRef'};
+            goto &{ $real_sub };
+        },
+       'isa_Data' => sub  {
+            my $real_sub = $__TYPEDICT__{'Data'};
             goto &{ $real_sub };
         },
 );
 
 # ------------ TYPES -------------- #
 our %__TYPEDICT__ = (
-
-    'ScalarRef' => (subname '${PKG}::create_type_ScalarRef' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_ScalarRef_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_ScalarRef_check" => sub {
-
-            ref $_[0] eq "SCALAR";
-        
-        };
-
-        return create_type_instance(
-            'ScalarRef', $generator, $constraint,
-            [qw(ScalarRef Ref Defined Item)],
-        );
-    }),
-
-    'Any' => (subname '${PKG}::create_type_Any' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Any_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Any_check" => sub {
-
-        1
-    
-        };
-
-        return create_type_instance(
-            'Any', $generator, $constraint,
-            [qw(Any)],
-        );
-    }),
-
-    'Regexp' => (subname '${PKG}::create_type_Regexp' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Regexp_defval" => sub {
-
-        my ($default_regex) = @args;
-        return defined $default_regex && ref $default_regex eq 'Regexp'
-            ? $default_regex
-            : qr{\A\z}xms
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Regexp_check" => sub {
-
-            ref $_[0] eq "Regexp";
-        
-        };
-
-        return create_type_instance(
-            'Regexp', $generator, $constraint,
-            [qw(Regexp RegexpRef Ref Defined Item)],
-        );
-    }),
-
-    'Item' => (subname '${PKG}::create_type_Item' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Item_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Item_check" => sub {
-
-        1
-    
-        };
-
-        return create_type_instance(
-            'Item', $generator, $constraint,
-            [qw(Item)],
-        );
-    }),
-
-    'Number' => (subname '${PKG}::create_type_Number' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Number_defval" => sub {
-
-        my ($default_value) = @args;
-        return $default_value
-            if defined $default_value;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Number_check" => sub {
-
-        !ref $_[0] && Scalar::Util::looks_like_number( $_[0] );
-    
-        };
-
-        return create_type_instance(
-            'Number', $generator, $constraint,
-            [qw(Number Value Defined Item)],
-        );
-    }),
-
-    'Object' => (subname '${PKG}::create_type_Object' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Object_defval" => sub {
-
-        my $class = shift @args;
-        return if not defined $class;
-
-        my %opts;
-        if (!scalar @args % 2) {
-            %opts = @args;
-        }
-
-        if (delete $opts{auto}) {
-            return $class->new({%opts});
-        }
-
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Object_check" => sub {
-
-        my $blessed = Scalar::Util::blessed($_[0]);
-        $blessed && $blessed ne 'Regexp';
-    
-        };
-
-        return create_type_instance(
-            'Object', $generator, $constraint,
-            [qw(Object Ref Defined Item)],
-        );
-    }),
-
-    'GlobRef' => (subname '${PKG}::create_type_GlobRef' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_GlobRef_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_GlobRef_check" => sub {
-
-            ref $_[0] eq "GLOB";
-        
-        };
-
-        return create_type_instance(
-            'GlobRef', $generator, $constraint,
-            [qw(GlobRef Ref Defined Item)],
-        );
-    }),
-
-    'Data' => (subname '${PKG}::create_type_Data' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Data_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Data_check" => sub {
-
-        1
-    
-        };
-
-        return create_type_instance(
-            'Data', $generator, $constraint,
-            [qw(Data)],
-        );
-    }),
-
-    'ClassName' => (subname '${PKG}::create_type_ClassName' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_ClassName_defval" => sub {
-
-        };
-
-        my $constraint = subname "${PKG}::isa_ClassName_check" => sub {
-
-        _is_valid_class_name($_[0]);
-    
-        };
-
-        return create_type_instance(
-            'ClassName', $generator, $constraint,
-            [qw(ClassName)],
-        );
-    }),
-
-    'Defined' => (subname '${PKG}::create_type_Defined' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Defined_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Defined_check" => sub {
-
-        defined $_[0];
-    
-        };
-
-        return create_type_instance(
-            'Defined', $generator, $constraint,
-            [qw(Defined Item)],
-        );
-    }),
 
     'Bool' => (subname '${PKG}::create_type_Bool' => sub  { ## no critic
         my (@args) = @_;
@@ -425,75 +187,6 @@ our %__TYPEDICT__ = (
         return create_type_instance(
             'Bool', $generator, $constraint,
             [qw(Bool Item)],
-        );
-    }),
-
-    'Undef' => (subname '${PKG}::create_type_Undef' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Undef_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Undef_check" => sub {
-
-        !defined $_[0];
-    
-        };
-
-        return create_type_instance(
-            'Undef', $generator, $constraint,
-            [qw(Undef Item)],
-        );
-    }),
-
-    'Array' => (subname '${PKG}::create_type_Array' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Array_defval" => sub {
-
-        my @default_values = @args;
-        return scalar @default_values ? \@default_values
-            : [ ];
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Array_check" => sub {
-
-            ref $_[0] eq "ARRAY";
-        
-        };
-
-        return create_type_instance(
-            'Array', $generator, $constraint,
-            [qw(Array ArrayRef Ref Defined Item)],
-        );
-    }),
-
-    'Ref' => (subname '${PKG}::create_type_Ref' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_Ref_defval" => sub {
-
-        return wantarray ? @args : $args[0]
-            if scalar @args;
-        return;
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Ref_check" => sub {
-
-        ref $_[0];
-    
-        };
-
-        return create_type_instance(
-            'Ref', $generator, $constraint,
-            [qw(Ref Defined Item)],
         );
     }),
 
@@ -521,33 +214,10 @@ our %__TYPEDICT__ = (
         );
     }),
 
-    'Code' => (subname '${PKG}::create_type_Code' => sub (;&;) { ## no critic
+    'Ref' => (subname '${PKG}::create_type_Ref' => sub  { ## no critic
         my (@args) = @_;
 
-        my $generator = subname "${PKG}::isa_Code_defval" => sub {
-
-        my ($default_coderef) = @args;
-        return defined $default_coderef ? $default_coderef
-            : subname 'lambda-nil' => sub { };
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_Code_check" => sub {
-
-            ref $_[0] eq "CODE";
-        
-        };
-
-        return create_type_instance(
-            'Code', $generator, $constraint,
-            [qw(Code CodeRef Ref Defined Item)],
-        );
-    }),
-
-    'CodeRef' => (subname '${PKG}::create_type_CodeRef' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_CodeRef_defval" => sub {
+        my $generator = subname "${PKG}::isa_Ref_defval" => sub {
 
         return wantarray ? @args : $args[0]
             if scalar @args;
@@ -555,22 +225,46 @@ our %__TYPEDICT__ = (
     
         };
 
-        my $constraint = subname "${PKG}::isa_CodeRef_check" => sub {
+        my $constraint = subname "${PKG}::isa_Ref_check" => sub {
 
-            ref $_[0] eq "CODE";
-        
+        ref $_[0];
+    
         };
 
         return create_type_instance(
-            'CodeRef', $generator, $constraint,
-            [qw(CodeRef Ref Defined Item)],
+            'Ref', $generator, $constraint,
+            [qw(Ref Defined Item)],
         );
     }),
 
-    'RegexpRef' => (subname '${PKG}::create_type_RegexpRef' => sub  { ## no critic
+    'Number' => (subname '${PKG}::create_type_Number' => sub  { ## no critic
         my (@args) = @_;
 
-        my $generator = subname "${PKG}::isa_RegexpRef_defval" => sub {
+        my $generator = subname "${PKG}::isa_Number_defval" => sub {
+
+        my ($default_value) = @args;
+        return $default_value
+            if defined $default_value;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Number_check" => sub {
+
+        !ref $_[0] && Scalar::Util::looks_like_number( $_[0] );
+    
+        };
+
+        return create_type_instance(
+            'Number', $generator, $constraint,
+            [qw(Number Value Defined Item)],
+        );
+    }),
+
+    'Defined' => (subname '${PKG}::create_type_Defined' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Defined_defval" => sub {
 
         return wantarray ? @args : $args[0]
             if scalar @args;
@@ -578,15 +272,175 @@ our %__TYPEDICT__ = (
     
         };
 
-        my $constraint = subname "${PKG}::isa_RegexpRef_check" => sub {
+        my $constraint = subname "${PKG}::isa_Defined_check" => sub {
+
+        defined $_[0];
+    
+        };
+
+        return create_type_instance(
+            'Defined', $generator, $constraint,
+            [qw(Defined Item)],
+        );
+    }),
+
+    'ScalarRef' => (subname '${PKG}::create_type_ScalarRef' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_ScalarRef_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_ScalarRef_check" => sub {
+
+            ref $_[0] eq "SCALAR";
+        
+        };
+
+        return create_type_instance(
+            'ScalarRef', $generator, $constraint,
+            [qw(ScalarRef Ref Defined Item)],
+        );
+    }),
+
+    'Object' => (subname '${PKG}::create_type_Object' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Object_defval" => sub {
+
+        my ($class, %opts);
+        if (+@args % 2) { # is odd number (class + a hash)
+            ($class, %opts) = @args;
+        }
+        else {
+            ($class) = @args;
+        }
+
+        return if not defined $class;
+
+        if (delete $opts{auto}) {
+            my $class_opts = scalar keys %opts ? {%opts} : ();
+            my $new_object = $class->new($class_opts);
+            return $new_object;
+        }
+
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Object_check" => sub {
+
+        my $blessed = Scalar::Util::blessed($_[0]);
+        $blessed && $blessed ne 'Regexp';
+    
+        };
+
+        return create_type_instance(
+            'Object', $generator, $constraint,
+            [qw(Object Ref Defined Item)],
+        );
+    }),
+
+    'File' => (subname '${PKG}::create_type_File' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_File_defval" => sub {
+
+        my ($default_value) = @args;
+
+        return $default_value
+            if defined $default_value;
+
+        if (! $INC{'FileHandle.pm'}) {
+            require FileHandle;
+        }
+        return FileHandle->new();
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_File_check" => sub {
+
+        ref $_[0] eq 'GLOB' && Scalar::Util::openhandle($_[0]);
+    
+        };
+
+        return create_type_instance(
+            'File', $generator, $constraint,
+            [qw(File GlobRef Ref Defined Item)],
+        );
+    }),
+
+    'GlobRef' => (subname '${PKG}::create_type_GlobRef' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_GlobRef_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_GlobRef_check" => sub {
+
+            ref $_[0] eq "GLOB";
+        
+        };
+
+        return create_type_instance(
+            'GlobRef', $generator, $constraint,
+            [qw(GlobRef Ref Defined Item)],
+        );
+    }),
+
+    'Regexp' => (subname '${PKG}::create_type_Regexp' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Regexp_defval" => sub {
+
+        my ($default_regex) = @args;
+        return defined $default_regex && ref $default_regex eq 'Regexp'
+            ? $default_regex
+            : qr{\A\z}xms
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Regexp_check" => sub {
 
             ref $_[0] eq "Regexp";
         
         };
 
         return create_type_instance(
-            'RegexpRef', $generator, $constraint,
-            [qw(RegexpRef Ref Defined Item)],
+            'Regexp', $generator, $constraint,
+            [qw(Regexp RegexpRef Ref Defined Item)],
+        );
+    }),
+
+    'Array' => (subname '${PKG}::create_type_Array' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Array_defval" => sub {
+
+        my @default_values = @args;
+        return scalar @default_values ? \@default_values
+            : [ ];
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Array_check" => sub {
+
+            ref $_[0] eq "ARRAY";
+        
+        };
+
+        return create_type_instance(
+            'Array', $generator, $constraint,
+            [qw(Array ArrayRef Ref Defined Item)],
         );
     }),
 
@@ -614,27 +468,63 @@ our %__TYPEDICT__ = (
         );
     }),
 
-    'Int' => (subname '${PKG}::create_type_Int' => sub  { ## no critic
+    'Role' => (subname '${PKG}::create_type_Role' => sub  { ## no critic
         my (@args) = @_;
 
-        my $generator = subname "${PKG}::isa_Int_defval" => sub {
+        my $generator = subname "${PKG}::isa_Role_defval" => sub {
 
-        my ($default_value) = @args;
-        return $default_value
-            if defined $default_value;
+        my ($class, %opts);
+        if (+@args % 2) { # is odd number (class + a hash)
+            ($class, %opts) = @args;
+        }
+        else {
+            ($class) = @args;
+        }
+
+        return if not defined $class;
+
+        if (delete $opts{auto}) {
+            my $class_opts = scalar keys %opts ? {%opts} : ();
+            my $new_object = $class->new($class_opts);
+            return $new_object;
+        }
+
         return;
     
         };
 
-        my $constraint = subname "${PKG}::isa_Int_check" => sub {
+        my $constraint = subname "${PKG}::isa_Role_check" => sub {
 
-        defined $_[0] && !ref $_[0] && $_[0] =~ m/^-?[0-9]+$/xms;
+        Scalar::Util::blessed($_[0]) && $_[0]->can('does')
     
         };
 
         return create_type_instance(
-            'Int', $generator, $constraint,
-            [qw(Int Number Value Defined Item)],
+            'Role', $generator, $constraint,
+            [qw(Role Object Ref Defined Item)],
+        );
+    }),
+
+    'Item' => (subname '${PKG}::create_type_Item' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Item_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Item_check" => sub {
+
+        1
+    
+        };
+
+        return create_type_instance(
+            'Item', $generator, $constraint,
+            [qw(Item)],
         );
     }),
 
@@ -684,40 +574,17 @@ our %__TYPEDICT__ = (
         );
     }),
 
-    'File' => (subname '${PKG}::create_type_File' => sub  { ## no critic
-        my (@args) = @_;
-
-        my $generator = subname "${PKG}::isa_File_defval" => sub {
-
-        my ($default_value) = @args;
-
-        return $default_value
-            if defined $default_value;
-
-        if (! $INC{'FileHandle.pm'}) {
-            require FileHandle;
-        }
-        return FileHandle->new();
-    
-        };
-
-        my $constraint = subname "${PKG}::isa_File_check" => sub {
-
-        ref $_[0] eq 'GLOB' && Scalar::Util::openhandle($_[0]);
-    
-        };
-
-        return create_type_instance(
-            'File', $generator, $constraint,
-            [qw(File GlobRef Ref Defined Item)],
-        );
-    }),
-
     'Hash' => (subname '${PKG}::create_type_Hash' => sub  { ## no critic
         my (@args) = @_;
 
         my $generator = subname "${PKG}::isa_Hash_defval" => sub {
 
+        if (scalar @args == 1) {
+            return $args[0] if ref $args[0] eq 'HASH';
+            confess "Attribute type Hash can't have default"
+                  . "value with odd number of elements.";
+        }
+        return { } if !+@args % 2;
         my %default_values = @args;
         return scalar keys %default_values ? \%default_values
             : { };
@@ -739,36 +606,184 @@ our %__TYPEDICT__ = (
         );
     }),
 
-    'Role' => (subname '${PKG}::create_type_Role' => sub  { ## no critic
+    'Undef' => (subname '${PKG}::create_type_Undef' => sub  { ## no critic
         my (@args) = @_;
 
-        my $generator = subname "${PKG}::isa_Role_defval" => sub {
+        my $generator = subname "${PKG}::isa_Undef_defval" => sub {
 
-        my $class = shift @args;
-        return if not defined $class;
-
-        my %opts;
-        if (!scalar @args % 2) {
-            %opts = @args;
-        }
-
-        if (delete $opts{auto}) {
-            return $class->new({%opts});
-        }
-
+        return wantarray ? @args : $args[0]
+            if scalar @args;
         return;
     
         };
 
-        my $constraint = subname "${PKG}::isa_Role_check" => sub {
+        my $constraint = subname "${PKG}::isa_Undef_check" => sub {
 
-        Scalar::Util::blessed($_[0]) && $_[0]->can('does')
+        !defined $_[0];
     
         };
 
         return create_type_instance(
-            'Role', $generator, $constraint,
-            [qw(Role Object Ref Defined Item)],
+            'Undef', $generator, $constraint,
+            [qw(Undef Item)],
+        );
+    }),
+
+    'RegexpRef' => (subname '${PKG}::create_type_RegexpRef' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_RegexpRef_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_RegexpRef_check" => sub {
+
+            ref $_[0] eq "Regexp";
+        
+        };
+
+        return create_type_instance(
+            'RegexpRef', $generator, $constraint,
+            [qw(RegexpRef Ref Defined Item)],
+        );
+    }),
+
+    'Int' => (subname '${PKG}::create_type_Int' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Int_defval" => sub {
+
+        my ($default_value) = @args;
+        return $default_value
+            if defined $default_value;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Int_check" => sub {
+
+        defined $_[0] && !ref $_[0] && $_[0] =~ m/^-?[0-9]+$/xms;
+    
+        };
+
+        return create_type_instance(
+            'Int', $generator, $constraint,
+            [qw(Int Number Value Defined Item)],
+        );
+    }),
+
+    'Code' => (subname '${PKG}::create_type_Code' => sub (;&;) { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Code_defval" => sub {
+
+        my ($default_coderef) = @args;
+        return defined $default_coderef ? $default_coderef
+            : subname 'lambda-nil' => sub { };
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Code_check" => sub {
+
+            ref $_[0] eq "CODE";
+        
+        };
+
+        return create_type_instance(
+            'Code', $generator, $constraint,
+            [qw(Code CodeRef Ref Defined Item)],
+        );
+    }),
+
+    'ClassName' => (subname '${PKG}::create_type_ClassName' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_ClassName_defval" => sub {
+
+        };
+
+        my $constraint = subname "${PKG}::isa_ClassName_check" => sub {
+
+        _is_valid_class_name($_[0]);
+    
+        };
+
+        return create_type_instance(
+            'ClassName', $generator, $constraint,
+            [qw(ClassName)],
+        );
+    }),
+
+    'Any' => (subname '${PKG}::create_type_Any' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Any_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Any_check" => sub {
+
+        1
+    
+        };
+
+        return create_type_instance(
+            'Any', $generator, $constraint,
+            [qw(Any)],
+        );
+    }),
+
+    'CodeRef' => (subname '${PKG}::create_type_CodeRef' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_CodeRef_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_CodeRef_check" => sub {
+
+            ref $_[0] eq "CODE";
+        
+        };
+
+        return create_type_instance(
+            'CodeRef', $generator, $constraint,
+            [qw(CodeRef Ref Defined Item)],
+        );
+    }),
+
+    'Data' => (subname '${PKG}::create_type_Data' => sub  { ## no critic
+        my (@args) = @_;
+
+        my $generator = subname "${PKG}::isa_Data_defval" => sub {
+
+        return wantarray ? @args : $args[0]
+            if scalar @args;
+        return;
+    
+        };
+
+        my $constraint = subname "${PKG}::isa_Data_check" => sub {
+
+        1
+    
+        };
+
+        return create_type_instance(
+            'Data', $generator, $constraint,
+            [qw(Data)],
         );
     }),
 );

@@ -8,7 +8,7 @@ Class::Dot::Devel::Sub::Name - Support better debugging output.
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes MyClass version 2.0.0_15
 
 =head1 SYNOPSIS
 

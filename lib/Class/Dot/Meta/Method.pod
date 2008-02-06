@@ -4,11 +4,11 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Meta::Method - Method Utilities
 
 =head1 VERSION
 
-This document describes MyClass version 2.0.0_10
+This document describes MyClass version 2.0.0_15
 
 =head1 SYNOPSIS
 

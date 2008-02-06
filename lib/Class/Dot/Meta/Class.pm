@@ -11,10 +11,10 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
-use Carp qw(carp croak);
+use Carp qw(carp croak confess);
 use Params::Util qw(_ARRAYLIKE _HASHLIKE);
 use Class::Plugin::Util qw(require_class);
 use Scalar::Util qw(blessed);
@@ -84,6 +84,17 @@ sub property {
 sub set_property {
     my ($self, $property_obj) = @_;
     $self->{property} = $property_obj;
+    return;
+}
+
+sub for_class {
+    my ($self) = @_;
+    return $self->{for_class};
+}
+
+sub set_for_class {
+    my ($self, $class) = @_;
+    $self->{for_class} = $class;
     return;
 }
 
@@ -214,16 +225,43 @@ sub get_linear_isa {
     return $isa;
 }
 
+sub metaclass_for {
+    my ($self, $other) = @_;
+    confess   'Need the class name or an instance of the '
+            . 'class you want metaclass for'
+        if not defined $other;
+
+    my $other_class = ref $other ? ref $other
+        : $other;
+
+    return $REGISTRY->get_metaclass_for($other);
+}
+
+sub composites {
+    my ($self, $attribute_name, $composite_class) = @_;
+    my $property = $self->property;
+    my $for_class = $self->for_class;
+
+    return $property->composites_for(
+        ($for_class, $attribute_name) => $composite_class
+    );
+}
+
 sub create_constructor {
     my ($self, $caller_class) = @_;
     my $options = $REGISTRY->get_options_for($caller_class);
 
     return subname "${caller_class}::new" => sub { ## no critic
-        my ($class, $options_ref) = @_;
+        my $class = shift @_;
 
-        if (!defined $options_ref) {
-            $options_ref = { };
-        }
+        my $has_options = (
+                defined $_[0]
+            &&  ref     $_[0]
+            &&  ref     $_[0] eq 'HASH'
+        );
+
+        my $options_ref = $has_options ? shift @_
+                                    : { };
 
         my $self;
         if ($options->{'-optimized'}) {
@@ -246,7 +284,10 @@ sub create_constructor {
         }
 
         if ($self->can('BUILD')) {
-            my $ret = $self->BUILD($options_ref); 
+            my $ret = $self->BUILD(
+                $has_options ? $options_ref
+                             : @_
+            ); 
             if ($options->{'-rebuild'}) {
                 if (ref $ret) {
                     $self = $ret;
@@ -280,7 +321,7 @@ __END__
 
 = NAME
 
-Class::Dot::Meta::Class - Create Perl classes dynamically.
+Class::Dot::Meta::Class - The default Class::Dot metaclass
 
 = VERSION
 
@@ -288,57 +329,18 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 = SYNOPSIS
 
-    use Class::Dot::Typemap qw(:std);
-
-    use Class::Dot::Typemap qw( isa_String isa_Int );
+    use Class::Dot::Meta::Class;
 
 
 = DESCRIPTION
 
-This module has the available types [Class::Dot] supports.
+This is the default [Class::Dot] metaclass, so it also defines
+the interface any metaclass must have to be compatible with Class::Dot.
 
 = SUBROUTINES/METHODS
 
-== CLASS METHODS
+== INSTANCE METHODS
 
-=== {isa_String($default_value)}
-=for apidoc CODEREF = Class::Dot::isa_String(data|CODEREF $default_value)
-
-The property is a string.
-
-=== {isa_Int($default_value)}
-=for apidoc CODEREF = Class::Dot::isa_Int(int $default_value)
-
-The property is a number.
-
-=== {isa_Array(@default_values)}
-=for apidoc CODEREF = Class::Dot::isa_Array(@default_values)
-
-The property is an array.
-
-=== {isa_Hash(%default_values)}
-=for apidoc CODEREF = Class::Dot::isa_Hash(@default_values)
-
-The property is an hash.
-
-=== {isa_Object($kind)}
-=for apidoc CODEREF = Class::Dot::isa_Object(string $kind)
-
-The property is a object.
-(Does not really set a default value.).
-
-=== {isa_Data()}
-=for apidoc CODEREF = Class::Dot::isa_Data($data)
-
-The property is of a not yet defined data type.
-
-=== {isa_Code()}
-=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
-
-The property is a subroutine reference.
-
-=== {isa_File()}
-=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
 
 
 = DIAGNOSTICS

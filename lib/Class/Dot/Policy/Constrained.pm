@@ -11,10 +11,10 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION    = qv('2.0.0_10');
+our $VERSION    = qv('2.0.0_15');
 our $AUTHORITY  = 'cpan:ASKSH';
 
-use Class::Dot ();
+use Class::Dot::Policy;
 
 my @PUSH_POLICY = qw(
     :fast
@@ -61,8 +61,7 @@ This document describes {Class::Dot} version %%VERSION%%
 This is a [Class::Dot] policy that can be used instead of {Class::Dot} to
 always enable some options.
 
-This policy will check type constraints for all attributes that has not set
-constraints off whenever a new value is set.
+This policy will check type constraints when attribute values are set.
 
 = SUBROUTINES/METHODS
 

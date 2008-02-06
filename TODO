@@ -1,7 +1,16 @@
-* Autogenerate unit tests fr the typemap.
+* Autogenerate unit tests for the typemap.
 * Constructor should call the set accessor itself instead of __setattr__.
-  (that is when -override-new (?) is on).
-* Create method mixin(@;) for adding mixin classes to the class.
-  (maybe Class::Dot::Object should be a mixin class?)
+  (that is when -override(-new ?) is on).
+* Support roles.
+* Create method mixin(@;) for adding mixin classes to the class. (use Roles
+  implementation) (maybe Class::Dot::Object should be a mixin class?)
+
+* Class::Dot::Meta::Accessor methods has too many arguments. Put them in a
+  hash instead
 
 * Croak if adding property/extends/composite and __is_finalized__
+
+* Move perltags things to a new distribution.
+
+* Class::Dot::Meta::Accessor: Don't use load_plugins anymore! Use factory_new
+  instead!

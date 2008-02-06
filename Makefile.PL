@@ -11,11 +11,15 @@ require 5.00600;
 use Carp qw(carp croak);
 use English qw(-no_match_vars);
 
-BEGIN {
-    eval 'require version'; ## no critic
-    if ($EVAL_ERROR) {
-        croak <<'EOFHELP'
+my $API_CHANGE_WARNING = <<'EOF'
+    *** 
+    NOTE: Class::Dot version 2.0 has new API changes.
+          Please see Changes for details.
+    ***
+EOF
+;
 
+my $REQUIRES_VERSION_ERROR = <<'EOFHELP'
 ERROR -------------------------------------------------
 
 This module requires the 'version' module to install.
@@ -49,36 +53,11 @@ Try installing Class::Dot again when you have installed 'version'.
 Thanks for your patience!
 
 --------------------------------------------------------------------
-
 EOFHELP
 ;
 
-    }
-}
-
-eval 'require Class::Dot';
-if (not $EVAL_ERROR) {
-    eval 'use version';
-    if (not $EVAL_ERROR) {
-        my $prev_version = version->new(Class::Dot->VERSION)->numify;
-        if ($prev_version lt '2.0') {
-            print <<'EOF'
-*** 
-NOTE: Class::Dot version 2.0 has new API changes.
-      Please see Changes for details.
-***
-EOF
-;
-        }
-    }
-}
-
-my @extra_recommends;
-if ($PERL_VERSION < 5.009005) {
-    push @extra_recommends, 'Class::C3::XS';
-    carp << 'EOFTIP'
-
-    WARNING: ------------------------------------------------------
+my $OLDER_PERL_WARNING = << 'EOFTIP'
+WARNING: ------------------------------------------------------
     I see you have a version of perl older than 5.10.0.
     It is strongly recommended to update to the latest version
     of perl (atleast 5.10.0), as this version includes optimizations
@@ -101,16 +80,37 @@ if ($PERL_VERSION < 5.009005) {
         http://search.cpan.org/dist/Class-C3-XS/
 
     Thank you for your patience!
-    ---------------------------------------------------------------
+---------------------------------------------------------------
 
 EOFTIP
 ;
+BEGIN {
+    eval 'require version'; ## no critic
+    croak $REQUIRES_VERSION_ERROR if $EVAL_ERROR;
+}
+
+
+eval 'require Class::Dot';
+if (not $EVAL_ERROR) {
+    eval 'use version';
+    if (not $EVAL_ERROR) {
+        my $prev_version = version->new(Class::Dot->VERSION)->numify;
+        if ($prev_version lt '2.0') {
+            carp $API_CHANGE_WARNING;
+        }
+    }
+}
+
+my @extra_recommends;
+if ($PERL_VERSION < 5.009005) {
+    push @extra_recommends, 'Class::C3::XS';
+    carp $OLDER_PERL_WARNING;
 }
     
 
 use inc::Module::Install;
 
-my $THIS_VERSION = '2.0.0_10';
+my $THIS_VERSION = '2.0.0_15';
 
 name                'Class-Dot';
 author              'Ask Solem <asksh@cpan.org>';
@@ -119,11 +119,17 @@ license             'bsd';
 all_from            'lib/Class/Dot.pm';
 
 requires            'version'             => 0;
-requires            'Class::Plugin::Util' => 0.007;
-requires            'Params::Util'        => 0;
+requires            'Class::Plugin::Util' => 0.9;
+requires            'Params::Util'        => 0.14;
 
-recommends          'Sub::Name'        => 0;
-recommends          'IO::Capture'      => 0;
+recommends          'Sub::Name'        => 0.01;
+recommends          'IO::Capture'      => 0.02;
+
+# Debian stable doesn't have Params::Util 0.23 yet, but it's about time _you should_.
+recommends          'Params::Util'     => 0.23; 
+
+# Debian stable doesn't have Test::Exception 0.22 yet, but it's about time _you should_.
+recommends          'Test::Exception'  => 0.22;
 
 for my $contextual_recommendation (@extra_recommends) {
     recommends $contextual_recommendation => 0;
@@ -132,7 +138,7 @@ for my $contextual_recommendation (@extra_recommends) {
 
 build_requires      'Test::Simple'     => 0.42;
 build_requires      'Scalar::Util'     => 1.14;
-build_requires      'Test::Exception'  => 0.25;
+build_requires      'Test::Exception'  => 0.21;
 
 perl_version        5.006_000;
 
@@ -142,7 +148,7 @@ no_index            directory => 'devel';
 
 distribution_type   'module';
 
-tests('t/*.t t/*/*.t');
+tests('t/*.t t/*/*.t t/*/*/*.t');
 
         
 

@@ -8,7 +8,7 @@ Class::Dot::Policy::Affordance - Prefix accessors with get_ and set_
 
 =head1 VERSION
 
-This document describes C<<< Class::Dot >>> version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 SYNOPSIS
 

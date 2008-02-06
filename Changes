@@ -1,6 +1,29 @@
 Revision history for Class-Dot
 
-2.0_10 Sun Jan 07 13:17:00 GMT+2 2007 [asksh@cpan.org]
+2.0_15 Tue Feb 05 17:15:00 GMT+1 2007 [asksh@cpan.org]
+
+    - Fixed bug with the Object type constraint where the default's
+      value's instance would be constructed with ->new(q{}) instead of
+      ->new(()). Patch thanks to Cosimo Streppone [cosimo@opera.com].
+
+    - dotperltags now supports the has() keyword.
+
+    - Fixed bugs with the Hash type constraint.
+
+2.0_12 Mon Jan 07 21:30:00 GMT+1 2007 [asksh@cpan.org]
+
+    - The new() constructor now supports other argument types than a hash
+      reference.
+
+    - Dependencies now reflecting the state of Debian stable.
+
+2.0_11 Mon Jan 07 18:39:00 GMT+1 2007 [asksh@cpan.org]
+
+    - Fixed a bug in the Object types default value factory where the
+      arguments sometimes was evaluated the wrong way (sometimes they
+      were suddently evaluated in scalar context instead of list context).
+
+2.0_10 Mon Jan 07 13:17:00 GMT+1 2007 [asksh@cpan.org]
 
     - No API Changes.
 
@@ -54,7 +77,7 @@ Revision history for Class-Dot
     - All Class::Dot classes now inherits from Class::Dot::Object.
       (this might change to mixin in the future, we'll see how it works out).
 
-2.0_09 Fri Dec 21 20:11:52 GMT+2 2007 [asksh@cpan.org]
+2.0_09 Fri Dec 21 20:11:52 GMT+1 2007 [asksh@cpan.org]
 
     - lib/Class/Dot/Types.pm is now auto generated from the Typemap file.
 
@@ -84,7 +107,7 @@ Revision history for Class-Dot
 
     - NOTE: Now dies if you supply unknown class options on the use-line.
 
-2.0_08 Thu Dec 20 12:44:43 GMT+2 2007 [asksh@cpan.org]
+2.0_08 Thu Dec 20 12:44:43 GMT+1 2007 [asksh@cpan.org]
 
     - There was a bug in the ISA traversal. It would not fetch recursive
       inheritance. This is now fixed.
@@ -109,7 +132,7 @@ Revision history for Class-Dot
     - Class::Dot now tries to load Class::Dot::XS which is a speed-up module
       in the making. It will be uploaded to CPAN when it's finished.
 
-2.0_08 Wed Dec 19 13:49:14 GMT+2 2007 [asksh@cpan.org]
+2.0_08 Wed Dec 19 13:49:14 GMT+1 2007 [asksh@cpan.org]
     - Reported by: srezic@cpan.org Subject: FAIL Class-Dot-2.0.0_07 MSWin32-x86-multi-thread 5.1
     Fixlog:
     Fixed problem on Win32 where extra zeros where padded to the version numbers:
@@ -126,11 +149,11 @@ Revision history for Class-Dot
     %     expected: '2.48'
     % Looks like you failed 2 tests of 115.
 
-2.0_07 Mon Dec 17 18:40:04 GMT+2 2007 [asksh@cpan.org]
+2.0_07 Mon Dec 17 18:40:04 GMT+1 2007 [asksh@cpan.org]
     - Added an optimization to the property inheritance traveral that is in
       effect if the class does not use inheritance.
 
-2.0_06 Mon Dec 17 14:35:44 GMT+2 2007 [asksh@cpan.org]
+2.0_06 Mon Dec 17 14:35:44 GMT+1 2007 [asksh@cpan.org]
     
     - Test coverage is now 98%
 
@@ -182,7 +205,7 @@ Revision history for Class-Dot
 
       
 
-2.0_05 Mon Dec 10 23:49:46 GMT+2 2007 [asksh@cpan.org]
+2.0_05 Mon Dec 10 23:49:46 GMT+1 2007 [asksh@cpan.org]
 
     - The set accessors for properties named _property will no longer be
      set__property, but will have the more intuitive name _set_property.
@@ -210,7 +233,7 @@ Revision history for Class-Dot
     If you really need this, be really sure you need it by profiling
     your code and not by guessing.
 
-2.0_04 Sat Oct 31 22:46:10 GMT+2 2007 [asksh@cpan.org]
+2.0_04 Sat Oct 31 22:46:10 GMT+1 2007 [asksh@cpan.org]
 
     - New feature: You can now do chained accessors by using the -chained use
       option. Example:
@@ -231,7 +254,7 @@ Revision history for Class-Dot
 
     - Module::Install updated to 0.68.
 
-2.0_03 Tue Oct 30 01:19:37 GMT+2 2007 [asksh@cpan.org]
+2.0_03 Tue Oct 30 01:19:37 GMT+1 2007 [asksh@cpan.org]
 
     - New and more readable SYNOPSIS.
 
@@ -241,7 +264,7 @@ Revision history for Class-Dot
 
     - Types separated from Class::Dot and moved into Class::Dot::Types.
 
-2.0_02 Mon Oct 29 18:08:12 GMT+2 2007 [asksh@cpan.org]
+2.0_02 Mon Oct 29 18:08:12 GMT+1 2007 [asksh@cpan.org]
 
     - License changed to the Modified BSD license,
       however if you ask me nicely I might give you permission to use
@@ -263,7 +286,7 @@ Revision history for Class-Dot
 
 * Changed to BSD license.
 
-2.0_01 Sun Oct 28 17:16:32 GMT+2 2007 [asksh@cpan.org]
+2.0_01 Sun Oct 28 17:16:32 GMT+1 2007 [asksh@cpan.org]
 
     - Code cleanup.
 
@@ -334,35 +357,35 @@ Revision history for Class-Dot
     (Note: Just be sure not to use property() in a BEGIN block, you have to use
     after_property_* to do that!)
 
-1.0.5  Mon Oct 01 17:13:03 GMT+2 2007 [asksh@cpan.org]
+1.0.5  Mon Oct 01 17:13:03 GMT+1 2007 [asksh@cpan.org]
     -  isa_File added (a Filehandle).
     -  isa_Code added (a code reference).
     -  Added import option: -rebuild.
        If you return something blessed from your BUILD method and -rebuild
        option is set, it will set $self to that.
 
-1.0.4  Thu Sep 20 16:30:11 GMT+2 2007 [asksh@cpan.org]
+1.0.4  Thu Sep 20 16:30:11 GMT+1 2007 [asksh@cpan.org]
     -  The created constructor (when using -new import tag option) didn't
        search ISA properly while setting properties using options to new().
     -  isa_Data now sets default value properly.
 
 
-1.0.3  Thu Sep 12 16:55:48 GMT+2 2007 [asksh@cpan.org]
+1.0.3  Thu Sep 12 16:55:48 GMT+1 2007 [asksh@cpan.org]
     -  isa_Int and isa_String set the initial value to 0 and q{} when no
        default value was defined, this resulted in `defined $property` to
        return true.
 
-1.0.2  Tue Sep 12 10:13:04 GMT+2 2007 [asksh@cpan.org]
+1.0.2  Tue Sep 12 10:13:04 GMT+1 2007 [asksh@cpan.org]
     -  Subversion now hosted at googlecode.
        http://class-dot.googlecode.comsearch
 
-1.0.1  Tue Sep 11 24:36:32 GMT+2 2007 [asksh@cpan.org]
+1.0.1  Tue Sep 11 24:36:32 GMT+1 2007 [asksh@cpan.org]
     -  isa_Object no longer automatically makes new objects if the property is
        not set. If you want that, use: isa_Object('My::Class', auto => 1);
     -  Fixed problems with isa_Object where it would try to make
        a new instance even though no default class was defined.
 
-0.0.1  Sun Sep  9 02:22:58 GMT+2 2007 [asksh@cpan.org]
+0.0.1  Sun Sep  9 02:22:58 GMT+1 2007 [asksh@cpan.org]
        Initial release.
 
 =for stopwords ISA Oct

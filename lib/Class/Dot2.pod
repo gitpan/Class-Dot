@@ -8,7 +8,7 @@ Class::Dot2 - Properties for Perl 5.
 
 =head1 VERSION
 
-This document describes C<<< Class::Dot >>> version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 SYNOPSIS
 

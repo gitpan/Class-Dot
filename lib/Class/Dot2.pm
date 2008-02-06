@@ -11,13 +11,19 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION    = qv('2.0.0_10');
+our $VERSION    = qv('2.0.0_15');
 our $AUTHORITY  = 'cpan:ASKSH';
 
-use Class::Dot ();
+use Class::Dot::Policy;
 
-my @PUSH_POLICY = qw(
-    :fast
+our @PUSH_POLICY = qw(
+    -new -optimized
+
+    has property extends composite
+
+    after_property_get after_property_set
+
+    finalize_class
 );
 
 sub import {
@@ -26,12 +32,13 @@ sub import {
     
     strict->import();
     warnings->import();
+    version->import();
 
     return if $caller_class eq 'main';
 
-    my @policy = Class::Dot->_create_policy(\@PUSH_POLICY, @args);
+    my @policy = Class::Dot::Policy->_create_policy(\@PUSH_POLICY, @args);
 
-    return Class::Dot->_dotify_class($caller_class, @policy);
+    return Class::Dot::Policy->_dotify_class($caller_class, @policy);
 }
 
 1;

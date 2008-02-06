@@ -1,0 +1,28 @@
+# $Id$
+# $Source$
+# $Author$
+# $HeadURL$
+# $Revision$
+# $Date$
+use strict;
+use warnings;
+
+use Test::More tests => 1;
+use Test::Exception;
+
+{
+    package MyAbstract;
+    use Class::Dot2 qw(-delegator -constrained);
+}
+
+ok( MyAbstract->isa('Class::Dot::Delegator'),
+    'Delegator inherits from Class::Dot::Delegator'
+);
+
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+# End:
+# vim: expandtab tabstop=4 shiftwidth=4 shiftround

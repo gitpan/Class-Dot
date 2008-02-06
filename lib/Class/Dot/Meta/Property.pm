@@ -31,7 +31,7 @@ use Class::Dot::Meta::Accessor;
 
 use Class::Dot::Devel::Sub::Name;
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my $ATTR_EXISTS         = 1;
@@ -43,8 +43,9 @@ my $TYPE_PRIVACY_DEFAULT  = 'public';
 
 my %TYPE_PRIVACY_ALIASES  = (
     'rw'    => 'public',
-    'ro'    => 'private',
+    'ro'    => 'readonly',
     'wo'    => 'writeonly',
+    'xx'    => 'private',
 );
 
 my %TYPE_PRIVACY_RULES   = (
@@ -52,11 +53,14 @@ my %TYPE_PRIVACY_RULES   = (
         has_getter => 1,
         has_setter => 1,
     },
-    private => {
+    readonly => {
         has_getter => 1,
     },
     writeonly => {
         has_setter => 1,
+    },
+    private => {
+        # nil
     },
 );
 

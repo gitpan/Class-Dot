@@ -41,7 +41,7 @@ property bool           => isa_Bool(0xfffd); #<< default value of 0xffff should
                                              #   become 1
 
 
-property readonly       => (isa_String('read me'), {privacy => 'private'});
+property readonly       => (isa_String('read me'), {privacy => 'readonly'});
 property readonly2      => (isa_String('we read'), privacy => 'ro');
 property writeonly      => (isa_String('write me'), {privacy => 'writeonly'});
 property writeonly2     => (isa_String('we write'), privacy => 'wo');

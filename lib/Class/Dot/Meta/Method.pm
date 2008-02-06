@@ -13,7 +13,7 @@ use 5.00600;
 
 use Carp qw(croak);
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 my %EXPORT_OK  = map { $_ => 1 } qw(
@@ -40,7 +40,8 @@ sub install_sub_from_class {
     my $from = join q{::}, ($pkg_from, $sub_name);
     my $to   = join q{::}, ($pkg_to,   $sub_name);
 
-    no strict 'refs'; ## no critic
+    no strict 'refs';   ## no critic
+    no warnings 'once'; ## no critic
     *{$to} = *{$from};
 
     return;
@@ -52,6 +53,7 @@ sub install_sub_from_coderef {
 
     no strict   'refs';     ## no critic
     no warnings 'redefine'; ## no critic
+    no warnings 'once';     ## no critic
     *{$to} = $coderef;
 
     return;
@@ -65,7 +67,7 @@ __END__
 
 = NAME
 
-Class::Dot::Meta::Methods - Method Utilities
+Class::Dot::Meta::Method - Method Utilities
 
 = VERSION
 

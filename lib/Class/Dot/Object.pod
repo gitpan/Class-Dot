@@ -8,7 +8,7 @@ Class::Dot::Object - The default base object for Class::Dot classes.
 
 =head1 VERSION
 
-This document describes C<<< Class::Dot >>> version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 DESCRIPTION
 
@@ -57,7 +57,7 @@ Return attribute metadata for an attribute by it's name.
 This will return the attribute's type instance. See L<Class::Dot::Type>
 for the methods available.
 
-=head3 C<<< __metaclass__ >>>
+=head3 C<<< __metaclass__() >>>
 
 Return the instance of the metaclass for this class.
 

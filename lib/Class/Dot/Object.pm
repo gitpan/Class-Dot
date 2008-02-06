@@ -10,9 +10,11 @@ use strict;
 use warnings;
 use version;
 use 5.00600;
+use dot::meta; # the metaclass psuedoclass.
 
-our $VERSION    = qv('2.0.0_10');
+our $VERSION    = qv('2.0.0_15');
 our $AUTHORITY  = 'cpan:ASKSH';
+
 
 use Class::Dot::Registry;
 my $REGISTRY = Class::Dot::Registry->new();
@@ -82,6 +84,10 @@ sub __meta__ {
 }
 
 sub __metaclass__ {
+    goto &HOW;
+}
+
+sub HOW {
     my ($self) = @_;
     return $REGISTRY->get_metaclass_for($self);
 }
@@ -148,7 +154,7 @@ Return attribute metadata for an attribute by it's name.
 This will return the attribute's type instance. See [Class::Dot::Type]
 for the methods available.
 
-=== {__metaclass__}
+=== {__metaclass__()}
 
 Return the instance of the metaclass for this class.
 

@@ -432,7 +432,7 @@ let s:tlist_def_make_settings = 'make;m:macro'
 let s:tlist_def_pascal_settings = 'pascal;f:function;p:procedure'
 
 " perl language
-let s:tlist_def_perl_settings = 'perl;c:constant;l:label;p:class;property:property;s:method'
+let s:tlist_def_perl_settings = 'perl;c:constant;l:label;p:class;property:attribute;s:method'
 
 " php language
 let s:tlist_def_php_settings = 'php;c:class;d:constant;v:variable;f:function'

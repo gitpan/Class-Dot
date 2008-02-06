@@ -4,574 +4,38 @@
 
 =head1 NAME
 
-Class::Dot - Simple and fast properties for Perl 5.
+Class::Dot - Compatability layer for Class::Dot 1.x
 
 =head1 VERSION
 
-This document describes Class::Dot version v2.0.0 (beta 4).
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 SYNOPSIS
 
-     package MyClass;
-     # load standard types (:std) and install default constructor (-new).
+     use Class::Dot2;
  
-     use Class::Dot qw(-new :std); # Automatically turns on strict and
-                                   # warnings.
- 
-     # This class inherits from BaseClass.
-     extends 'BaseClass';
- 
-     # This class has-a AnotherClass.
-     composite another_class => 'AnotherClass'
- 
-     # Property without type.
-     property 'attribute';
- 
-     # List of property types, doesn't need a default value.
-     property string     => isa_String('default value');
- 
-     property integer    => isa_Int(256);
- 
-     property object     => isa_Object('MyApp::Controller');
- 
-     property hashref    => isa_Hash(foo => 1, bar => 2);
- 
-     property arrayref   => isa_Array(qw(the quick brown fox ...));
- 
-     property filehandle => isa_File()
- 
-     property code       => isa_Code { return 42 };
- 
-     property any_data   => isa_Data;
- 
-     # Object type that automatically creates new instance if it doesn't exist.
-     property model      => isa_Object('MyApp::Model', auto => 1);
- 
-     # Initialize something at object construction.
-     sub BUILD {
-         my ($self, $options_ref) = @_;
- 
-         warn 'Creating a new object of type ', ref $self;
- 
-         return;
-     }
- 
-     # Do something at object destruction.
-     sub DEMOLISH {
-         my ($self) = @_;
- 
-         warn 'Instance of class', ref $self, ' is going out of scope.';
- 
-         return;
-     }
- 
-     # Re-bless instance at instance construction time. (option -rebuild)
-     use Carp;
-     use Class::Dot qw(-new -rebuild :std);
-     use Class::Plugin::Util qw(require_class); # For dynamic loading of classes.
- 
-     sub BUILD {
-         my ($self, $options_ref) = @_;
- 
-         if (exists $options_ref->{delegate_to}) {
-             my $new_class    = $options_ref->{delegate_to};
-             if (require_class($new_class)) {
-                 my $new_instance = $new_class->new();
-                 return $new_instance;
-             }
-             else {
-                 croak "Could not load class: $new_class"
-             }
-         }
- 
-         return;
-     }
+     # is the same as:
+     # use Class::Dot qw(-new -optimized :std);
 
 =head1 DESCRIPTION
 
-Simple and fast properties for Perl 5.
-
-=over
-
-=item *
-
-Properties are fully overrideable (Even when set using C<<< new({}) >>>).
-
-=back
-
-=over
-
-=item *
-
-Lets you define types for your properties, like Hash, String, Int, File, Code, Array and so on.
-
-=back
-
-=over
-
-=item *
-
-Supports type constraints.
-
-=back
-
-=over
-
-=item *
-
-Is not here to replace Moose, but can be used as a drop-in replacement for Moose to get
-
-=back
-
-   better runtime performance. (does only support a small subset of Moose!)
-
-All the types are populated with sane defaults, so you no longer have to
-write code like this:
-
-    sub make_healthy {
-       my ($self) = @_;
-       my $state  = $self->state;
-       my $fur    = $self->fur;
- 
-       $state ||= { }; # <-- you don't have to do this with class dot.
-           $fur   ||= [ ]; # <-- same with this.
-    }
-
-Class::Dot can also create a default constructor for you if you pass it the
-C<<< -new >>> option on the use line:
-
-     use Class::Dot qw(-new :std);
-
-If you pass a hashref to the constructor, it will use them as values for the
-properties:
-
-    my $cat = Animal::Mammal::Carnivorous::Cat->new({
-         gender => 'male',
-         fur    => ['black', 'white', 'short'],
-    }
-
-If you want to intialize something at object construction time you can! Just
-define a method named C<<< BUILD >>>. C<<< Class::Dot >>> will pass on the instance and
-all the arguments that was sent to C<<< new >>>.
-
-     sub BUILD {
-         my ($self, $options_ref) = @_;
- 
-         warn 'Someone created a ', ref $self;
- 
-         return;
-     }
-
-The return value of the C<<< BUILD >>> method doesn't mean anything, that is unleass
-you have to C<<< -rebuild >>> option on. When the C<<< -rebuild >>> option is on,
-C<<< Class::Dot >>> uses the return value of BUILD as the new object, so you can
-create a abstract factory or similar:
-
-     use Class::Dot qw(-new -rebuild :std);
- 
-     sub BUILD {
-         my ($self, $option_ref) = @_;
- 
-         if (exists $options_ref->{delegate_to}) {
-             my $new_class = $options_ref->{delegate_to};
-             my $new_instasnce = $new_class->new($options_ref);
- 
-             return $new_instance;
-         }
- 
-         return;
-     }
-
-A big value of using properties is that you can override them at a later point
-to make them support additional functionality, like setting a hardware flag,
-logging, etc. In Class::Dot you override a property simply by defining their
-accessors:
-
-    property name => isa_String();
- 
-    sub name {   # <-- overrides the get accessor
-        my ($self) = @_;
- 
-        warn 'Acessing the name property';
- 
-        return $self->__getattr__('name');
-    }
- 
- 
-     sub set_name { # <-- overrides the set accessor
-         my ($self, $new_name) = @_;
- 
-         warn $self->__getattr__('name'), " changed name to $new_name!";
- 
-         $self->__setattr__('name', $new_name);
- 
-         return;
-     }
-
-There is one exception where this won't work, though. That is if you define a
-property in a C<<< BEGIN >>> block. If you do that you have to use the
-C<<< after_property_get() >>> and C<<< after_property_set() >>> functions:
-
-     BEGIN {
-         use Class::Dot qw(-new :std);
-         property name => isa_String();
-     }
- 
-     after_property_get name => sub {
-         my ($self) = @_;
- 
-         warn 'Acessing the name property';
- 
-         return $self->__getattr__('name');
-     }; # <-- the semicolon is required here!
- 
-     after_property_set name => sub {
-         my ($self, $new_name) = @_;
- 
-         warn $self->__getattr__('name'), " changed name to $new_name!";
- 
-         $self->__setattr__('name', $new_name);
- 
-         return;
-     }; # <-- the semicolon is required here!
-
-You can read more about C<<< Class::Dot >>> in the L<Class::Dot::Manual::Cookbook> and
-L<Class::Dot::Manual::FAQ>. (Not yet written for the 2.0 beta release).
-
-Have a good time working with C<<< Class::Dot >>>, and please report any bug you
-might find, or send feature requests. (although C<<< Class::Dot >>> is not meant to
-be L<Moose>, it's meant to be simple and fast).
-
-=head1 SUBROUTINESE<sol>METHODS
-
-=head2 CLASS METHODS
-
-=head3 C<<< property($property_name, %options) >>>
-
-=for apidoc VOID = Class::Dot::property(string $property, data $default_value)
-
-Example:
-
-     property foo => isa_String('hello world');
- 
-     property bar => isa_Int(303);
-
-will create the methods:
-
-     foo( )
-     set_foo($value)
- 
-     bar( )
-     set_bar($value)
-
-with default return values -hello world- and -303-.
-
-=head3 C<<< has($property_name, %options) >>>
-
-Alias to C<<< property >>>.
-
-=head3 C<<< define_property($property_name, $default_value, $in_class, $options) >>>
-
-Same as C<<< property() >>> except you define which class to install the property
-in.
-
-=head3 C<<< extends(@superclasses) >>>
-
-Set superclasses for the current class. Same as C<<< use base @superclasses >>>.
-
-Example:
-
-     package MyClass::Child;
-     use Class::Dot qw(-new :std);
-     extends 'MyClass';
-
-=head3 C<<< superclasses_for($class, @superclasses) >>>
-
-Set the superclasses for another class.
-
-Example:
-
-     Class::Dot::superclasses_for('ThatClass' => qw(ThatClass::Base));
-
-=head3 C<<< composite($property_name, $composite_class) >>>
-
-Denotes that the current class has a has-a relationship to another
-class. The C<<< $composite_class >>> will be loaded and a property with the name 
-C<<< $property_name >>> will be created. The class will be automatically created
-if there is no instance constructed at object construction time.
-
-     composite another_class => 'Another::Class'
-
-is the same as:
-
-     property another_class => isa_Object('Another::Class', auto => 1);
-
-You can then override this property at another time if you like.
-
-Example defining the instance at build time:
-
-     class MyClass;
- 
-     composite another_class => 'Another::Class';
- 
-     sub BUILD {
-         my ($self, $options_ref) = @_;
- 
-         my $another_class = Another::Class->new();
-         $self->set_another_class( $another_class );
- 
-         return;
-     }
- 
- 
-     sub hello_from_another_class {
-         my ($self) = @_;
-         my $another_class = $self->another_class;
- 
-         return $another_class->hello();
-     }
-
-=head3 C<<< composites_for($class, $property_name, $composite_class) >>>
-
-Composite the class C<<< $class >>> with C<<< $composite_class >>> as a property
-with the name C<<< $property_name >>>.
-
-=head3 C<<< finalize_class($opt_class) >>>
-
-This will finalize the class C<<< $opt_class >>>. If C<<< $opt_class >>> is not given, the
-current class is used.
-
-You can't add any new properties to the class after finalization.
-So, why would you want to do this? Because it's an optimization.
-All inheritance lookups are cached at the moment of finalization
-and ISA will no longer be traversed at property lookups.
-
-=head3 C<<< after_property_get($attr_name, \&code) >>>
-
-Override the get accessor method for a property.
-
-Example:
-
-    property name => isa_String;
- 
-    after_property_get name => sub {
-       my ($self) = @_;
- 
-       warn 'Accessing the name property of ' . ref $self;
- 
-       return $self->__getattr__('name');
-    }; # <- needs the semi-colon at the end!
-
-=head3 C<<< after_property_set($attr_name, \&code) >>>
-
-Override the set accessor method for a property.
-
-Example:
-
-    property name => isa_String;
- 
-    after_property_set name => sub {
-       my ($self, $new_name) = @_;
- 
-       warn $self->__getattr__('name') . " is canging name to $new_name";
- 
-       $self->__setattr__('name', $new_name);
- 
-       return;
-    }; # <- needs the semi-colon at the end!
-
-=head3 C<<< isa_String($default_value) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_String(data|CODEREF $default_value)
-
-The property is a string.
-
-=head3 C<<< isa_Int($default_value) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Int(int $default_value)
-
-The property is a number.
-
-=head3 C<<< isa_Array(@default_values) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Array(@default_values)
-
-The property is an array.
-
-=head3 C<<< isa_Hash(%default_values) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Hash(@default_values)
-
-The property is an hash.
-
-=head3 C<<< isa_Object($kind) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Object(string $kind)
-
-The property is a object.
-(Does not really set a default value.).
-
-=head3 C<<< isa_Data() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Data($data)
-
-The property is of a not yet defined data type.
-
-=head3 C<<< isa_Code() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
-
-The property is a subroutine reference.
-
-=head3 C<<< isa_File() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
-
-=head2 INSTANCE METHODS
-
-=head3 C<<< ->properties_for_class($class) >>>
-
-=for apidoc HASHREF = Class::Dot->properties_for_class(_CLASS|BLESSED $class)
-
-Return the list of properties for a classE<sol>object that uses the powers.
-
-=head2 PRIVATE CLASS METHODS
-
-=head3 C<<< _create_get_accessor($property, $default_value) >>>
-
-=for apidoc CODEREF = Class::Dot::_create_get_accessor(string $property, data|CODEREF $default_value)
-
-Create the set accessor for a property.
-Returns a code reference to the new setter method.
-It has to be installed into the callers package afterwards.
-
-=head3 C<<< _create_set_accessor($property) >>>
-
-=for apidoc CODEREF = Class::Dot::_create_set_accessor(string $property)
-
-Create the get accessor for a property.
-Returns a code reference to the new getter method.
-It has to be installed into the callers package afterwards.
-
-=head1 DIAGNOSTICS
-
-=head2 * You tried to set a value with C<<< foo() >>>. Did you mean C<<< set_foo() >>>
-
-Self-explained?
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-This module requires no configuration file or environment variables.
-
-=head1 DEPENDENCIES
-
-=over
-
-=item *
-
-L<version>
-
-=back
-
-=head1 INCOMPATIBILITIES
-
-None known.
+See L<Class::Dot>
 
 =head1 BUGS AND LIMITATIONS
 
 No bugs have been reported.
 
 Please report any bugs or feature requests to
-L<bug-class-dot@rt.cpan.org|mailto:bug-class-dot@rt.cpan.org>, or through the web interface at
-L<CPAN Bug tracker|http://rt.cpan.org>.
-
-=head1 BENCHMARK
-
-This is a benchmark to show an example of how C<<< Class::Dot >>> performs over other
-similar implementations. The source code for the benchmark can be found in
-the C<<< Class::Dot >>> distributions C<<< devel/dotbench.pl >>> file.
-
-                           Rate   moose class::dot class::dot-finalized pureperl-OO
-     moose                 1186/s      --       -96%                 -96% -97%
-     class::dot           27624/s   2229%         --                 -12% -28%
-     class::dot-finalized 31546/s   2560%        14%                   -- -18%
-     pureperl-OO          38610/s   3156%        40%                  22%
-
-These are pretty simple programs that just creates an instance and sets+gets
-some properties. Products may perform differently is other scenarios, after
-all it's just a benchmark.
-
-C<<< class::dot-finalized >>> is the same program but where the class is finalized.
-Finalizing the class is a simple operation, but after the class has been
-finalized you can not add any new properties or base classes.
-
-This is how you do it:
-
-     __PACAKGE__->__finalize__();
-
-Not that this should be done 'after' you have called the C<<< Class::Dot >>>
-functions you need.
-
---
+L<bug-class-dot@rt.cpan.org|mailto:bug-class-dot@rt.cpan.org>, or through the
+web interface at L<CPAN Bug tracker|http://rt.cpan.org>.
 
 =head1 SEE ALSO
 
-=head2 L<Moose>
-
-A complete object system for Perl 5. It is much more complete than
-C<<< Class::Dot >>>, but it is also slower.
-
-=head2 L<Class::Accessor>
-
-=head2 L<Class::Accessor::Fast>
-
-Simple generation of accessors (mutators). You can override the accessors
-themselves, but if you use the default constructor, you can't intercept
-the setting of values when you do:
-
-     my $instance = Class->new({
-         name => 'George Louis Constanza',
-     });
-
-To do that you would have to create a new constructor like this:
-
-     sub new {
-         my ($class, $options_ref) = @_;
- 
-         my $self = bless { }, $class;
- 
-         while (my ($attr_name, $attr_val) = each %{ $options_ref }) {
-             if ($self->can($attr_name)) {
-                 $self->$attr_name($attr_val);
-             }
-         }
- 
-         return $self;
-     }
-
-Which is a hassle done automatically in C<<< Class::Dot >>>,
-and, on a personal note, I really don't like
-the syntax (C<<< __PACKAGE__->mk_accessors >>> etc).
-
-L<Class::Accessor::Fast> is 'fast' however! 
-
-=head2 L<Class::InsideOut>
-
-For Inside-Out objects. Does not have types.
-
-=head1 CODE COVERAGE
-
-     ---------------------------- ------ ------ ------ ------ ------ ------ ------
-     File                           stmt   bran   cond    sub    pod   time  total
-     ---------------------------- ------ ------ ------ ------ ------ ------ ------
-     lib/Class/Dot.pm               99.0   98.8   64.3  100.0  100.0   79.0   98.2
-     lib/Class/Dot/Types.pm         97.0   97.2  100.0  100.0  100.0   21.0   97.8
-     Total                          98.4   98.4   70.6  100.0  100.0  100.0   98.1
-     ---------------------------- ------ ------ ------ ------ ------ ------ ------
+=head2 L<Class::Dot>
 
 =head1 AUTHOR
 
-Ask Solem, L<ask@0x61736b.net>.
+Ask Solem, L<asksh@cpan.org>.
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -585,22 +49,24 @@ modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this
 list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright notice, this
+2. Redistributions in binary form must reproduce the above copyright notice,
+this
 list of conditions and the following disclaimer in the documentation andE<sol>or
 other materials provided with the distribution.
 
-3. The name of the author may not be used to endorse or promote products derived
+3. The name of the author may not be used to endorse or promote products
+derived
 from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
-EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED                        
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF                                
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO                          
+EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                              
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,                        
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR                      
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER                       
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)                          
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE                          
 POSSIBILITY OF SUCH DAMAGE.
 
 =head1 DISCLAIMER OF WARRANTY
@@ -625,7 +91,7 @@ SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
 
-=for stopwords vim expandtab shiftround
+=for stopwords expandtab shiftround
 
 # Local Variables:
 #   mode: cperl
@@ -633,3 +99,4 @@ POSSIBILITY OF SUCH DAMAGES.
 #   fill-column: 78
 # End:
 # vim: expandtab tabstop=4 shiftwidth=4 shiftround
+    

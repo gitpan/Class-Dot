@@ -13,6 +13,7 @@ use devel::Generator::Typemap;
 class  'Class::Dot::Typemap';
 output 'lib/Class/Dot/Typemap.pm';
 
+alias '...'         => 'Any';
 alias 'Str'         => 'String';
 alias 'Num'         => 'Number';
 alias 'FileHandle'  => 'File';
@@ -158,6 +159,12 @@ typedef 'Hash' => type {
     isa             => 'HashRef',
     default_value   => q
     {
+        if (scalar @args == 1) {
+            return $args[0] if ref $args[0] eq 'HASH';
+            confess "Attribute type Hash can't have default"
+                  . "value with odd number of elements.";
+        }
+        return { } if !+@args % 2;
         my %default_values = @args;
         return scalar keys %default_values ? \%default_values
             : { };
@@ -220,16 +227,20 @@ typedef 'Object' => type {
    
     default_value   => q
     {
-        my $class = shift @args;
-        return if not defined $class;
-
-        my %opts;
-        if (!scalar @args % 2) {
-            %opts = @args;
+        my ($class, %opts);
+        if (+@args % 2) { # is odd number (class + a hash)
+            ($class, %opts) = @args;
+        }
+        else {
+            ($class) = @args;
         }
 
+        return if not defined $class;
+
         if (delete $opts{auto}) {
-            return $class->new({%opts});
+            my $class_opts = scalar keys %opts ? {%opts} : ();
+            my $new_object = $class->new($class_opts);
+            return $new_object;
         }
 
         return;

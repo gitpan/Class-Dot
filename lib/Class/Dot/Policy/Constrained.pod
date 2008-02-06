@@ -8,7 +8,7 @@ Class::Dot::Policy::Constrained - Always check type constraints.
 
 =head1 VERSION
 
-This document describes C<<< Class::Dot >>> version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 SYNOPSIS
 
@@ -22,8 +22,7 @@ This document describes C<<< Class::Dot >>> version 2.0.0_10
 This is a L<Class::Dot> policy that can be used instead of C<<< Class::Dot >>> to
 always enable some options.
 
-This policy will check type constraints for all attributes that has not set
-constraints off whenever a new value is set.
+This policy will check type constraints when attribute values are set.
 
 =head1 SUBROUTINESE<sol>METHODS
 

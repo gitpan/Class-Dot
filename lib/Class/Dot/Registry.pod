@@ -8,7 +8,7 @@ Class::Dot::Registry - Class registry.
 
 =head1 VERSION
 
-This document describes Class::Dot version 2.0.0_10
+This document describes Class::Dot version 2.0.0_15
 
 =head1 SYNOPSIS
 

@@ -12,7 +12,7 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 use Carp qw(croak confess);
@@ -42,7 +42,7 @@ sub create_get_accessor {
         };
 
         if (!exists $self->{$property_key}) {
-            
+
             if (_NEWSCHOOL_TYPE($isa)) {
                 $self->{$property_key} = $isa->default_value($self);
             }
@@ -84,7 +84,7 @@ sub create_mutator {
         my ($self, $value) = @_;
 
         if (defined $value) {
-            confess "Can't set value with $property(). It's private!"
+            confess "Can't set value with $property(). It's read only!"
                 if not $priv->{has_setter};
             if ($options->{'-optimized'}) {
                 $self->{$property_key} = $value;
@@ -226,9 +226,9 @@ Private metadata for [Class::Plugin::Util].
 You tried to set a value via an accessor that is a get accessor, not a
 mutator. You should probably follow the error message advice.
 
-== {Can't set value with %s(). It's private!}
+== {Can't set value with %s(). It's read only!}
 
-The attribute you tried to set is {private} and can't be set like this,
+The attribute you tried to set is {readonly} and can't be set like this,
 if you feel otherwise, declare it as {public}, or set the value via
 {$self->__setattr__($attribute_name, $value)}.
 

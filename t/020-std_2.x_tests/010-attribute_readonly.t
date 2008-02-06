@@ -43,8 +43,8 @@ sub test_a_readonly_property {
         "$prop has default value intact"
     );
 
-    is( $meta->privacy, 'private',
-        "privacy for $prop is private"
+    is( $meta->privacy, 'readonly',
+        "privacy for $prop is readonly"
     );
 
     ok( $meta->privacy_rule->{has_getter},

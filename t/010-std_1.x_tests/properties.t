@@ -30,7 +30,7 @@ plan( tests => $THIS_TEST_HAS_TESTS );
 use_ok('Class::Dot');
 
 dies_ok( sub { ! Class::Dot::property( ) }, 'property without name dies.');
-like($EVAL_ERROR, qr/All properties needs a name!/,
+like($EVAL_ERROR, qr/Property needs name/,
     '... and we get the error message we expect.'
 );
 
@@ -150,17 +150,17 @@ my $match_against = 'The quick brown fox jumps over the lazy dog.';
 ok( $match_against =~ $testo->regex_def, 'Can match against isa_Regex');
 is( $testo->bool, 1, 'isa_Bool default value of 0xffff becomes 1');
 
-# Test attribute privacy: private / ro
+# Test attribute privacy: readonly / ro
 
 is( $testo->readonly, 'read me' );
-ok(!$testo->can('set_readonly'), 'privacy private has no setter');
+ok(!$testo->can('set_readonly'), 'privacy readonly has no setter');
 ok(!$testo->__meta__('readonly')->setter_name,
-    'privacy private meta has no setter_name() defined'
+    'privacy readonly meta has no setter_name() defined'
 );
 is( $testo->readonly2, 'we read' );
-ok(!$testo->can('set_readonly2'), 'privacy private has no setter');
+ok(!$testo->can('set_readonly2'), 'privacy readonly has no setter');
 ok(!$testo->__meta__('readonly2')->setter_name,
-    'privacy private meta has no setter_name() defined'
+    'privacy readonly meta has no setter_name() defined'
 );
 
 # Test attribute privacy: writeonly / wo
@@ -407,17 +407,17 @@ like($EVAL_ERROR, qr/Unknown type constraint/,
     'invalid type for has() croaks'
 );
 
-ok( $testo->can('__metaclass__'), 'the __metaclass_ method is available');
-ok( $testo->__metaclass__, 'the metaclass is defined');
-ok( blessed $testo->__metaclass__, 'the metaclass is a object instance' );
+ok( $testo->can('HOW'), 'the __metaclass_ method is available');
+ok( $testo->HOW, 'the metaclass is defined');
+ok( blessed $testo->HOW, 'the metaclass is a object instance' );
 
-ok( $testo->__metaclass__->can('property'),
-    '__metaclass__ has property object'
+ok( $testo->HOW->can('property'),
+    'HOW has property object'
 );
-ok( $testo->__metaclass__->property,
+ok( $testo->HOW->property,
     'the metaclasses property attr is defined'
 );
-ok( blessed $testo->__metaclass__->property,
+ok( blessed $testo->HOW->property,
     'the metaclasses property attr is an object instance'
 );
 

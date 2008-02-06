@@ -16,7 +16,7 @@ use Class::Dot::Meta::Method qw(
     install_sub_from_class
 );
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 BEGIN {

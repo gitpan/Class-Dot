@@ -11,7 +11,7 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 use Carp qw(croak);
@@ -149,7 +149,7 @@ sub get_options_for {
     $initial_options ||= { };
 
     # Must be a copy of the options because it probably
-    # comes from %Class::Dot::DEFAULT_OPTIONS, so if we
+    # comes from %Class::Dot::Policy::DEFAULT_OPTIONS, so if we
     # just use that reference all class options will be
     # the same as the last class initialized.
     $options_for->{$class} ||= { %{$initial_options} };

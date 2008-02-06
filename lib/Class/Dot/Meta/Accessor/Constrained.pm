@@ -12,7 +12,7 @@ use warnings;
 use version;
 use 5.00600;
 
-our $VERSION   = qv('2.0.0_10');
+our $VERSION   = qv('2.0.0_15');
 our $AUTHORITY = 'cpan:ASKSH';
 
 use Carp qw(confess croak);
@@ -70,7 +70,7 @@ sub create_mutator {
         my ($self, $value) = @_;
 
         if (defined $value) {
-            confess "Can't set value with $property(). It's private!"
+            confess "Can't set value with $property(). It's read only!"
                 if not $priv->{has_setter}; 
             if (! $check_constraint->($value)) {
                 confess sprintf($CONSTRAINT_CHECK_ERROR,

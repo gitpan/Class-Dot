@@ -9,7 +9,7 @@ package Perl::Tags::ClassDot::Tag::Property;
 use strict;
 use warnings;
 use vars qw(@ISA);
-use version; our $VERSION = qv('2.0.0_10');
+use version; our $VERSION = qv('2.0.0_15');
 use 5.00600;
 
 @ISA = qw(Perl::Tags::Tag); ## no critic

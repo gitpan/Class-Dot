@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Class::Dot::Meta::Class - Create Perl classes dynamically.
+Class::Dot::Meta::Class - The default Class::Dot metaclass
 
 =head1 VERSION
 
@@ -12,64 +12,16 @@ This document describes Class::Dot version v2.0.0 (beta 4).
 
 =head1 SYNOPSIS
 
-     use Class::Dot::Typemap qw(:std);
- 
-     use Class::Dot::Typemap qw( isa_String isa_Int );
+     use Class::Dot::Meta::Class;
 
 =head1 DESCRIPTION
 
-This module has the available types L<Class::Dot> supports.
+This is the default L<Class::Dot> metaclass, so it also defines
+the interface any metaclass must have to be compatible with Class::Dot.
 
 =head1 SUBROUTINESE<sol>METHODS
 
-=head2 CLASS METHODS
-
-=head3 C<<< isa_String($default_value) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_String(data|CODEREF $default_value)
-
-The property is a string.
-
-=head3 C<<< isa_Int($default_value) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Int(int $default_value)
-
-The property is a number.
-
-=head3 C<<< isa_Array(@default_values) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Array(@default_values)
-
-The property is an array.
-
-=head3 C<<< isa_Hash(%default_values) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Hash(@default_values)
-
-The property is an hash.
-
-=head3 C<<< isa_Object($kind) >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Object(string $kind)
-
-The property is a object.
-(Does not really set a default value.).
-
-=head3 C<<< isa_Data() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Data($data)
-
-The property is of a not yet defined data type.
-
-=head3 C<<< isa_Code() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Code(CODEREF $code)
-
-The property is a subroutine reference.
-
-=head3 C<<< isa_File() >>>
-
-=for apidoc CODEREF = Class::Dot::isa_Code(FILEHANDLE $fh)
+=head2 INSTANCE METHODS
 
 =head1 DIAGNOSTICS
 

@@ -9,7 +9,7 @@ package Perl::Tags::ClassDot;
 use strict;
 use warnings;
 use vars qw(@ISA $VERSION);
-use version; $VERSION = qv('2.0.0_10');
+use version; $VERSION = qv('2.0.0_15');
 use 5.00600;
 
 @ISA = qw(Perl::Tags::Naive); ## no critic
@@ -26,6 +26,26 @@ my $RE_PROPERTY = qr{
                 (?:\=\>\s*(.+))$
 }xms;
 
+my $RE_HAS = qr{
+    ^\s*
+        has \s*\(?
+            (?:[\"\'])? ([\-|+|!]?[\w_\d]+) (?:[\"\'])?
+            \s*
+            (.+?)
+        \)?;?
+    $
+}xms;
+
+my $RE_EXTENDS = qr{
+    ^\s*
+    extends \(? (?:qw\()?
+    \s*
+    (
+        [\"\'] (.+?) [\"\'],?
+    )+
+}xms;
+    
+
 sub get_parsers {
    my $self = shift;
    return (
@@ -40,17 +60,30 @@ sub property_line {
    my ( $self, $line, $statement, $file ) = @_;
 
    return if not defined $statement;
-   if ($statement =~ $RE_PROPERTY) {
-      my ($name, $type) = ( q{}, 'isa_Anything' );
-      if (defined $1) {
-        $name = $1;
-      };
-      if (defined $2) {
-        $type = $2;
-      }
 
+   if ($statement =~ $RE_PROPERTY || $statement =~ $RE_HAS) {
+        my ($name, $type) = ( q{}, 'Any' );
+        if (defined $1) {
+            $name = $1;
+        };
+        if (defined $2) {
+            $type = $2;
+        }
+
+      $type =~ s/#.+?$//;
       $type =~ s/^isa_/is /xms;
-      $type =~ s/\;$//xms;
+      $type =~ s/\s*=>\s*//xms;    # Remove the first fat arrow...
+      $type =~ s/\s*=>\s*/: /xmsg; # ...then format the rest of them.
+      $type =~ s/\;\s*$//xms;
+      if ($type =~ s{isa:\s*[\"\']?(.+?)[\"\'],?}{}xms) {
+        if (defined $1) {
+            $type = "[$1] $type";
+        }
+      }
+      $type =~ s{\(\)$}{}xms;
+      $type =~ s{\(\s*}{(}xmsg;
+      $type =~ s{\s*\)}{)}xmsg;  
+        
 
       return Perl::Tags::ClassDot::Tag::Property->new(
          name    => "$name $type",
@@ -59,6 +92,17 @@ sub property_line {
          linenum => $INPUT_LINE_NUMBER,
       );
    }
+
+    if ($statement =~ $RE_EXTENDS) {
+        return if not defined $1;
+
+        my $superclass = $1;
+
+        #return Perl::Tags::ClassDot::Tag::Superclass->new(
+        #    name => "$superclass"  
+    }
+             
+
    return;
 }
 

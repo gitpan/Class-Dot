@@ -8,7 +8,7 @@ Class::Dot::Meta::Accessor::Overrideable - The default accessor type
 
 =head1 VERSION
 
-This document describes C<<< Class::Dot >>> version 2.0.0_10
+This document describes C<<< Class::Dot >>> version 2.0.0_15
 
 =head1 SYNOPSIS
 
@@ -103,9 +103,9 @@ Private metadata for L<Class::Plugin::Util>.
 You tried to set a value via an accessor that is a get accessor, not a
 mutator. You should probably follow the error message advice.
 
-=head2 C<<< Can't set value with %s(). It's private! >>>
+=head2 C<<< Can't set value with %s(). It's read only! >>>
 
-The attribute you tried to set is C<<< private >>> and can't be set like this,
+The attribute you tried to set is C<<< readonly >>> and can't be set like this,
 if you feel otherwise, declare it as C<<< public >>>, or set the value via
 C<<< $self->__setattr__($attribute_name, $value) >>>.
 

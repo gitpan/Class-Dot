@@ -49,15 +49,15 @@ use strict;
 use warnings;
 use Class::Dot2;
 
-property name => isa_String('Ask');
+has 'name' => (isa => 'String', default => 'Ask');
 
 package DotterFinalized;
 use strict;
 use warnings;
-use Class::Dot2;
+use Class::Dot2 (-override);
 
-property name => isa_String('Ask');
-__PACKAGE__->__finalize__;
+has 'name' => (isa => 'String', default => 'Ask');
+finalize_class();
 
 package Normal;
 use strict;

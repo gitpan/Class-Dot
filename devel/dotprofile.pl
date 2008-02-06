@@ -4,9 +4,9 @@
 package Dotter;
 use strict;
 use warnings;
-use Class::Dot qw(-new :std);
+use Class::Dot2 qw(-override);
 
-property name => isa_String('Ask');
+has name => (isa => 'String', default => 'Ask');
 
 package main;
 

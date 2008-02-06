@@ -1,10 +1,10 @@
 --- 
-abstract: Simple and fast properties for Perl 5.
+abstract: Compatability layer for Class::Dot 1.x
 author: 
   - Ask Solem <asksh@cpan.org>
 build_requires: 
   Scalar::Util: 1.14
-  Test::Exception: 0.25
+  Test::Exception: 0.21
   Test::Simple: 0.42
 distribution_type: module
 generated_by: Module::Install version 0.68
@@ -20,12 +20,14 @@ no_index:
     - inc
     - t
 recommends: 
-  IO::Capture: 0
-  Sub::Name: 0
+  IO::Capture: 0.02
+  Params::Util: 0.23
+  Sub::Name: 0.01
+  Test::Exception: 0.22
 requires: 
-  Class::Plugin::Util: 0.007
-  Params::Util: 0
+  Class::Plugin::Util: 0.9
+  Params::Util: 0.14
   perl: 5.6.0
   version: 0
-tests: t/*.t t/*/*.t
-version: 2.0.0_10
+tests: t/*.t t/*/*.t t/*/*/*.t
+version: 2.0.0_15
